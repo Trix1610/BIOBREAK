@@ -1,0 +1,26 @@
+# Godot
+.godot/
+/android/
+
+# .NET / C#
+bin/
+obj/
+
+# Visual Studio
+.vs/
+*.user
+*.suo
+
+# JetBrains Rider
+.idea/
+
+# VS Code
+.vscode/
+
+# Build / export output
+/build/
+/export/
+
+# OS
+.DS_Store
+Thumbs.db
