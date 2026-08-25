@@ -1,0 +1,25 @@
+[gd_scene format=3 uid="uid://dkhv5u1n3uv21"]
+
+[ext_resource type="Script" uid="uid://dkahcrvsdi3dv" path="res://scripts/enemies/Enemy.cs" id="1_7iym1"]
+[ext_resource type="PackedScene" uid="uid://defvqa3qr5gib" path="res://scenes/world/PickupItem.tscn" id="2_7cewq"]
+[ext_resource type="Script" uid="uid://de13h0il17l1l" path="res://scripts/resources/OrganData.cs" id="3_vtlqb"]
+[ext_resource type="Resource" uid="uid://b2up5aa67lup4" path="res://resources/organs/hyper_lungs.tres" id="4_24b6r"]
+[ext_resource type="Resource" uid="uid://l7sjmymo67qn" path="res://resources/organs/spring_nervous.tres" id="5_tboc4"]
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_i0tg4"]
+size = Vector2(32, 32)
+
+[node name="Enemy" type="CharacterBody2D" unique_id=60729758]
+script = ExtResource("1_7iym1")
+DropItemScene = ExtResource("2_7cewq")
+PossibleLoot = Array[ExtResource("3_vtlqb")]([ExtResource("4_24b6r"), ExtResource("5_tboc4")])
+
+[node name="ColorRect" type="ColorRect" parent="." unique_id=86350571]
+offset_left = -16.0
+offset_top = -16.0
+offset_right = 16.0
+offset_bottom = 16.0
+color = Color(1, 0, 0, 1)
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="." unique_id=1886755542]
+shape = SubResource("RectangleShape2D_i0tg4")

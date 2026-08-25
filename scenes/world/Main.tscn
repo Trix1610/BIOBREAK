@@ -1,0 +1,68 @@
+[gd_scene format=3 uid="uid://b3t7p83kicrs6"]
+
+[ext_resource type="PackedScene" uid="uid://ctuoit3eyjd61" path="res://scenes/player/Player.tscn" id="1_431da"]
+[ext_resource type="Script" uid="uid://bhcs2a6md7beb" path="res://scripts/world/Room.cs" id="1_room"]
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_plat"]
+size = Vector2(1152, 32)
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_wall"]
+size = Vector2(32, 648)
+
+[node name="Main" type="Node2D" unique_id=1775672402]
+script = ExtResource("1_room")
+
+[node name="ColorRect" type="ColorRect" parent="." unique_id=1185146768]
+offset_right = 1152.0
+offset_bottom = 648.0
+color = Color(0.08, 0.08, 0.12, 1)
+
+[node name="Environment" type="StaticBody2D" parent="." unique_id=1220376051]
+
+[node name="Floor" type="CollisionShape2D" parent="Environment" unique_id=363252992]
+position = Vector2(576, 632)
+shape = SubResource("RectangleShape2D_plat")
+
+[node name="Ceiling" type="CollisionShape2D" parent="Environment" unique_id=227001112]
+position = Vector2(576, 16)
+shape = SubResource("RectangleShape2D_plat")
+
+[node name="WallLeft" type="CollisionShape2D" parent="Environment" unique_id=1440545858]
+position = Vector2(16, 324)
+shape = SubResource("RectangleShape2D_wall")
+
+[node name="WallRight" type="CollisionShape2D" parent="Environment" unique_id=1436507095]
+position = Vector2(1136, 324)
+shape = SubResource("RectangleShape2D_wall")
+
+[node name="PlatformLeft" type="CollisionShape2D" parent="Environment" unique_id=303428061]
+position = Vector2(250, 450)
+shape = SubResource("RectangleShape2D_plat")
+
+[node name="PlatformRight" type="CollisionShape2D" parent="Environment" unique_id=1332623034]
+position = Vector2(902, 450)
+shape = SubResource("RectangleShape2D_plat")
+
+[node name="LeftDoor" type="Area2D" parent="." unique_id=1511574135]
+position = Vector2(50, 550)
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="LeftDoor" unique_id=301228991]
+shape = SubResource("RectangleShape2D_wall")
+
+[node name="RightDoor" type="Area2D" parent="." unique_id=45729746]
+position = Vector2(1102, 550)
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="RightDoor" unique_id=81451285]
+shape = SubResource("RectangleShape2D_wall")
+
+[node name="SpawnLeft" type="Marker2D" parent="." unique_id=1110807654]
+position = Vector2(120, 550)
+
+[node name="SpawnRight" type="Marker2D" parent="." unique_id=1600903999]
+position = Vector2(1032, 550)
+
+[node name="SpawnCenter" type="Marker2D" parent="." unique_id=2065619282]
+position = Vector2(576, 550)
+
+[node name="Player" parent="." unique_id=1765311499 instance=ExtResource("1_431da")]
+position = Vector2(146, 109)

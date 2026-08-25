@@ -1,0 +1,56 @@
+[gd_scene load_steps=5 format=3 uid="uid://level3_room_003"]
+
+[ext_resource type="Script" path="res://scripts/world/Room.cs" id="1_room"]
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_wall"]
+size = Vector2(32, 648)
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_plat"]
+size = Vector2(1152, 32)
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_altar"]
+size = Vector2(300, 120)
+
+[node name="Level3" type="Node2D"]
+script = ExtResource("1_room")
+
+[node name="ColorRect" type="ColorRect" parent="."]
+offset_right = 1152.0
+offset_bottom = 648.0
+color = Color(0.15, 0.12, 0.05, 1)
+
+[node name="Environment" type="StaticBody2D" parent="."]
+
+[node name="Floor" type="CollisionShape2D" parent="Environment"]
+position = Vector2(576, 632)
+shape = SubResource("RectangleShape2D_plat")
+
+[node name="WallLeft" type="CollisionShape2D" parent="Environment"]
+position = Vector2(16, 324)
+shape = SubResource("RectangleShape2D_wall")
+
+[node name="WallRight" type="CollisionShape2D" parent="Environment"]
+position = Vector2(1136, 324)
+shape = SubResource("RectangleShape2D_wall")
+
+[node name="Altar" type="CollisionShape2D" parent="Environment"]
+position = Vector2(576, 556)
+shape = SubResource("RectangleShape2D_altar")
+
+[node name="LeftDoor" type="Area2D" parent="."]
+position = Vector2(50, 550)
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="LeftDoor"]
+shape = SubResource("RectangleShape2D_wall")
+
+[node name="RightDoor" type="Area2D" parent="."]
+position = Vector2(1102, 550)
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="RightDoor"]
+shape = SubResource("RectangleShape2D_wall")
+
+[node name="SpawnLeft" type="Marker2D" parent="."]
+position = Vector2(120, 550)
+
+[node name="SpawnRight" type="Marker2D" parent="."]
+position = Vector2(1032, 550)

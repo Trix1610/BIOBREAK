@@ -1,0 +1,18 @@
+[gd_scene format=3 uid="uid://defvqa3qr5gib"]
+
+[ext_resource type="Script" uid="uid://cm6wivn4lwoqj" path="res://scripts/world/PickupItem.cs" id="1_vrelk"]
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_i0tg4"]
+
+[node name="PickupItem" type="Area2D" unique_id=1550367068]
+script = ExtResource("1_vrelk")
+
+[node name="ColorRect" type="ColorRect" parent="." unique_id=1076995146]
+offset_left = -10.0
+offset_top = -10.0
+offset_right = 10.0
+offset_bottom = 10.0
+color = Color(0, 1, 1, 1)
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="." unique_id=1218717852]
+shape = SubResource("RectangleShape2D_i0tg4")
