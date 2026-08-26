@@ -1,4 +1,5 @@
 using Godot;
+using System;
 using System.Collections.Generic;
 
 public partial class RunManager : Node
@@ -11,17 +12,23 @@ public partial class RunManager : Node
 	public RoomNode CurrentRoom { get; set; }
 	public Dictionary<Vector2I, RoomNode> RoomGrid { get; private set; } = new();
 
+	// Ссылка на черный экран для фейда
+	private ColorRect _fadeRect;
+
 	// Префайбы комнат
 	private PackedScene _mainScene = GD.Load<PackedScene>("res://scenes/world/Main.tscn");
-	private PackedScene _lvl2Scene = GD.Load<PackedScene>("res://scenes/world/level2.tscn");
-	private PackedScene _lvl3Scene = GD.Load<PackedScene>("res://scenes/world/level3.tscn");
-	private PackedScene _lvl4Scene = GD.Load<PackedScene>("res://scenes/world/level4.tscn");
-	private PackedScene _lvl5Scene = GD.Load<PackedScene>("res://scenes/world/level5.tscn");
+	private PackedScene _lvl2Scene = GD.Load<PackedScene>("res://scenes/world/Level2.tscn");
+	private PackedScene _lvl3Scene = GD.Load<PackedScene>("res://scenes/world/Level3.tscn");
+	private PackedScene _lvl4Scene = GD.Load<PackedScene>("res://scenes/world/Level4.tscn");
+	private PackedScene _lvl5Scene = GD.Load<PackedScene>("res://scenes/world/Level5.tscn");
 
 	public override void _Ready()
 	{
 		Instance = this;
-		
+
+		// Автоматически создаем слой затемнения поверх всех окон при запуске
+		SetupFadeLayer();
+
 		// Автоматически запускаем раунд при старте, если он еще не активен
 		if (!IsRunActive)
 		{
@@ -29,11 +36,42 @@ public partial class RunManager : Node
 		}
 	}
 
+	private void SetupFadeLayer()
+	{
+		var canvasLayer = new CanvasLayer();
+		canvasLayer.Layer = 100; // Ставим поверх всего интерфейса и комнат
+		AddChild(canvasLayer);
+
+		_fadeRect = new ColorRect();
+		_fadeRect.Color = Colors.Black;
+		_fadeRect.Modulate = new Color(1, 1, 1, 0); // Изначально полностью прозрачный
+		
+		// Растягиваем на весь экран
+		_fadeRect.AnchorRight = 1.0f;
+		_fadeRect.AnchorBottom = 1.0f;
+		_fadeRect.MouseFilter = Control.MouseFilterEnum.Ignore; // Чтобы не блокировал клики мыши
+		
+		canvasLayer.AddChild(_fadeRect);
+	}
+
 	// МЕТОД ЗАПУСКА НОВОГО ЗАБЕГА
 	public void StartNewRun(int runSeed = 0)
 	{
 		IsRunActive = true;
 		GenerateFixedLinearFloor();
+
+		// ГЛАВНОЕ ИСПРАВЛЕНИЕ: принудительно загружаем сцену Main при старте забега,
+		// чтобы игра физически открывала правильную комнату с нужными точками спавна!
+		if (CurrentRoom != null && CurrentRoom.RoomScene != null)
+		{
+			// Указываем точку спавна по умолчанию для старта игры
+			if (GameManager.Instance != null)
+			{
+				GameManager.Instance.TargetSpawnPoint = "SpawnCenter"; // Или "SpawnLeft"
+			}
+
+			CallDeferred(MethodName.ChangeSceneDeferred, CurrentRoom.RoomScene.ResourcePath);
+		}
 	}
 
 	private void GenerateFixedLinearFloor()
@@ -63,6 +101,7 @@ public partial class RunManager : Node
 		// Стартовая комната — Main (0, 0)
 		CurrentRoom = mainRoom;
 		CurrentRoom.IsVisited = true;
+		CurrentRoom.IsCleared = true;
 	}
 
 	private void ConnectRooms(RoomNode roomA, RoomNode roomB, Vector2I directionFromAToB)
@@ -71,7 +110,7 @@ public partial class RunManager : Node
 		roomB.Neighbors[-directionFromAToB] = roomA;
 	}
 
-	public void MoveToRoom(Vector2I direction, string targetSpawnPoint)
+	public async void MoveToRoom(Vector2I direction, string targetSpawnPoint)
 	{
 		if (CurrentRoom != null && CurrentRoom.Neighbors.ContainsKey(direction))
 		{
@@ -79,17 +118,41 @@ public partial class RunManager : Node
 			CurrentRoom = nextRoom;
 			CurrentRoom.IsVisited = true;
 
-			GameManager.Instance.TargetSpawnPoint = targetSpawnPoint;
+			if (GameManager.Instance != null)
+			{
+				GameManager.Instance.TargetSpawnPoint = targetSpawnPoint;
+			}
 
-			// ВМЕСТО ПРЯМОГО ВЫЗОВА: GetTree().ChangeSceneToFile(...)
-			// Используем CallDeferred для безопасной смены сцены после физического шага:
-			CallDeferred(MethodName.ChangeSceneDeferred, nextRoom.RoomScene.ResourcePath);
+			// Если экран затемнения существует, делаем плавный переход
+			if (_fadeRect != null)
+			{
+				// 1. Плавно затемняем экран (за 0.2 секунды)
+				Tween tweenIn = CreateTween();
+				tweenIn.TweenProperty(_fadeRect, "modulate:a", 1.0f, 0.2f);
+				await ToSignal(tweenIn, "finished");
+
+				// 2. Меняем сцену в темноте
+				CallDeferred(MethodName.ChangeSceneDeferred, nextRoom.RoomScene.ResourcePath);
+
+				// Небольшая пауза для стабилизации прогрузки новой сцены
+				await ToSignal(GetTree().CreateTimer(0.05f), "timeout");
+
+				// 3. Плавно возвращаем видимость обратно
+				Tween tweenOut = CreateTween();
+				tweenOut.TweenProperty(_fadeRect, "modulate:a", 0.0f, 0.2f);
+			}
+			else
+			{
+				// Резервный вариант без анимации, если вдруг что-то пойдет не так
+				CallDeferred(MethodName.ChangeSceneDeferred, nextRoom.RoomScene.ResourcePath);
+			}
 		}
 		else
 		{
 			GD.Print($"[RunManager] Door exists, but no room exists in direction: {direction}");
 		}
 	}
+
 	private void ChangeSceneDeferred(string scenePath)
 	{
 		GetTree().ChangeSceneToFile(scenePath);

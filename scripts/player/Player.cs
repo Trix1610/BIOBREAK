@@ -3,7 +3,7 @@ using Godot;
 public partial class Player : CharacterBody2D
 {
 	[Export] public float BaseSpeed { get; set; } = 200.0f;
-	[Export] public float JumpVelocity { get; set; } = -400.0f; // Сила прыжка (в Godot вверх — это минус)
+	[Export] public float JumpVelocity { get; set; } = -600.0f; // Сила прыжка (в Godot вверх — это минус)
 
 	// Получаем значение гравитации из настроек проекта Godot
 	public float gravity = ProjectSettings.GetSetting("physics/2d/default_gravity").AsSingle();
@@ -87,12 +87,12 @@ public partial class Player : CharacterBody2D
 	}
 	private void Attack()
 	{
-		// Простая проверка врагов поблизости (в радиусе 50 пикселей)
+		// Простая проверка врагов поблизости (в радиусе 60 пикселей)
 		foreach (Node node in GetParent().GetChildren())
 		{
 			if (node is Enemy enemy && GlobalPosition.DistanceTo(enemy.GlobalPosition) < 60.0f)
 			{
-				enemy.TakeDamage(20.0f); // Наносим 20 урона (убивает за 1 удар)
+				enemy.TakeDamage(20); // Исправлено: передаем целое число (int)
 				break;
 			}
 		}

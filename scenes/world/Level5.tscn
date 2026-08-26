@@ -1,56 +1,120 @@
-[gd_scene format=3 uid="uid://by3adbp3ma4pa"]
+[gd_scene format=3 uid="uid://std2_uid"]
 
 [ext_resource type="Script" uid="uid://bhcs2a6md7beb" path="res://scripts/world/Room.cs" id="1_room"]
+[ext_resource type="Texture2D" uid="uid://dcg5mxh7cvjxj" path="res://tile_0000.png" id="2_431da"]
+
+[sub_resource type="PhysicsMaterial" id="PhysicsMaterial_xxjbg"]
 
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_plat"]
-size = Vector2(1152, 32)
+size = Vector2(600, 35)
 
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_wall"]
-size = Vector2(32, 648)
+size = Vector2(32, 1080)
 
-[sub_resource type="RectangleShape2D" id="RectangleShape2D_boss_stage"]
-size = Vector2(500, 60)
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_mid"]
+size = Vector2(400, 20)
 
-[node name="Level5" type="Node2D" unique_id=944407528]
+[node name="RoomStandard2" type="Node2D"]
 script = ExtResource("1_room")
+LimitRight = 1920
+LimitBottom = 1080
 
-[node name="ColorRect" type="ColorRect" parent="." unique_id=755873215]
-offset_right = 1152.0
-offset_bottom = 648.0
-color = Color(0.18, 0.05, 0.05, 1)
+[node name="ColorRect" type="ColorRect" parent="."]
+offset_right = 1920.0
+offset_bottom = 1080.0
+color = Color(0.1, 0.06, 0.06, 1)
 
-[node name="Environment" type="StaticBody2D" parent="." unique_id=1347353215]
+[node name="Environment" type="StaticBody2D" parent="."]
+physics_material_override = SubResource("PhysicsMaterial_xxjbg")
 
-[node name="Floor" type="CollisionShape2D" parent="Environment" unique_id=1228669103]
-position = Vector2(576, 632)
+[node name="FloorLeft" type="CollisionShape2D" parent="Environment"]
+position = Vector2(300, 1063)
 shape = SubResource("RectangleShape2D_plat")
 
-[node name="WallLeft" type="CollisionShape2D" parent="Environment" unique_id=1102022215]
-position = Vector2(16, 324)
+[node name="TextureRect" type="TextureRect" parent="Environment/FloorLeft"]
+offset_left = -300.0
+offset_top = -17.0
+offset_right = 300.0
+offset_bottom = 18.0
+texture = ExtResource("2_431da")
+stretch_mode = 1
+
+[node name="FloorRight" type="CollisionShape2D" parent="Environment"]
+position = Vector2(1620, 1063)
+shape = SubResource("RectangleShape2D_plat")
+
+[node name="TextureRect" type="TextureRect" parent="Environment/FloorRight"]
+offset_left = -300.0
+offset_top = -17.0
+offset_right = 300.0
+offset_bottom = 18.0
+texture = ExtResource("2_431da")
+stretch_mode = 1
+
+[node name="Ceiling" type="CollisionShape2D" parent="Environment"]
+position = Vector2(960, 16)
+shape = SubResource("RectangleShape2D_plat")
+
+[node name="TextureRect" type="TextureRect" parent="Environment/Ceiling"]
+offset_left = -960.0
+offset_top = -17.0
+offset_right = 960.0
+offset_bottom = 18.0
+texture = ExtResource("2_431da")
+stretch_mode = 1
+
+[node name="WallLeft" type="CollisionShape2D" parent="Environment"]
+position = Vector2(16, 540)
 shape = SubResource("RectangleShape2D_wall")
 
-[node name="WallRight" type="CollisionShape2D" parent="Environment" unique_id=328429801]
-position = Vector2(1136, 324)
+[node name="TextureRect" type="TextureRect" parent="Environment/WallLeft"]
+offset_left = -16.0
+offset_top = -540.0
+offset_right = 16.0
+offset_bottom = 540.0
+texture = ExtResource("2_431da")
+stretch_mode = 1
+
+[node name="WallRight" type="CollisionShape2D" parent="Environment"]
+position = Vector2(1904, 540)
 shape = SubResource("RectangleShape2D_wall")
 
-[node name="BossStage" type="CollisionShape2D" parent="Environment" unique_id=563209986]
-position = Vector2(578, 585)
-shape = SubResource("RectangleShape2D_boss_stage")
+[node name="TextureRect" type="TextureRect" parent="Environment/WallRight"]
+offset_left = -16.0
+offset_top = -540.0
+offset_right = 16.0
+offset_bottom = 540.0
+texture = ExtResource("2_431da")
+stretch_mode = 1
 
-[node name="LeftDoor" type="Area2D" parent="." unique_id=326624082]
-position = Vector2(50, 550)
+[node name="FloatingIsland" type="CollisionShape2D" parent="Environment"]
+position = Vector2(960, 800)
+shape = SubResource("RectangleShape2D_mid")
 
-[node name="CollisionShape2D" type="CollisionShape2D" parent="LeftDoor" unique_id=686605737]
+[node name="TextureRect" type="TextureRect" parent="Environment/FloatingIsland"]
+offset_left = -200.0
+offset_top = -10.0
+offset_right = 200.0
+offset_bottom = 10.0
+texture = ExtResource("2_431da")
+stretch_mode = 1
+
+[node name="LeftDoor" type="Area2D" parent="."]
+position = Vector2(50, 980)
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="LeftDoor"]
+position = Vector2(0, -46)
 shape = SubResource("RectangleShape2D_wall")
 
-[node name="RightDoor" type="Area2D" parent="." unique_id=1972228139]
-position = Vector2(1102, 550)
+[node name="RightDoor" type="Area2D" parent="."]
+position = Vector2(1820, 980)
 
-[node name="CollisionShape2D" type="CollisionShape2D" parent="RightDoor" unique_id=1116674129]
+[node name="CollisionShape2D" type="CollisionShape2D" parent="RightDoor"]
+position = Vector2(0, -46)
 shape = SubResource("RectangleShape2D_wall")
 
-[node name="SpawnLeft" type="Marker2D" parent="." unique_id=105735340]
-position = Vector2(120, 550)
+[node name="SpawnLeft" type="Marker2D" parent="."]
+position = Vector2(150, 980)
 
-[node name="SpawnRight" type="Marker2D" parent="." unique_id=40958553]
-position = Vector2(1032, 550)
+[node name="SpawnRight" type="Marker2D" parent="."]
+position = Vector2(1870, 980)

@@ -1,0 +1,14 @@
+[gd_scene format=3 uid="uid://b6j8wif1vsg8o"]
+
+[ext_resource type="Script" uid="uid://b2c7mdpeyo8qk" path="res://scripts/ui/HealthUI.cs" id="1_14qox"]
+
+[node name="HealthUI" type="CanvasLayer" unique_id=832382491]
+script = ExtResource("1_14qox")
+
+[node name="HBoxContainer" type="HBoxContainer" parent="." unique_id=1477127941]
+offset_left = 2.0
+offset_top = 1.0
+offset_right = 42.0
+offset_bottom = 41.0
+pivot_offset = Vector2(20, 20)
+theme_override_constants/separation = 8

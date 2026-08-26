@@ -1,68 +1,109 @@
 [gd_scene format=3 uid="uid://b3t7p83kicrs6"]
 
-[ext_resource type="PackedScene" uid="uid://ctuoit3eyjd61" path="res://scenes/player/Player.tscn" id="1_431da"]
 [ext_resource type="Script" uid="uid://bhcs2a6md7beb" path="res://scripts/world/Room.cs" id="1_room"]
+[ext_resource type="Texture2D" uid="uid://dcg5mxh7cvjxj" path="res://tile_0000.png" id="2_431da"]
+
+[sub_resource type="PhysicsMaterial" id="PhysicsMaterial_xxjbg"]
 
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_plat"]
-size = Vector2(1152, 32)
+size = Vector2(1920, 35)
 
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_wall"]
-size = Vector2(32, 648)
+size = Vector2(32, 1080)
 
-[node name="Main" type="Node2D" unique_id=1775672402]
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_mid"]
+size = Vector2(500, 20)
+
+[node name="MainRoom" type="Node2D" unique_id=563607404]
 script = ExtResource("1_room")
 
-[node name="ColorRect" type="ColorRect" parent="." unique_id=1185146768]
-offset_right = 1152.0
-offset_bottom = 648.0
+[node name="ColorRect" type="ColorRect" parent="." unique_id=870690450]
+offset_right = 1920.0
+offset_bottom = 1080.0
 color = Color(0.08, 0.08, 0.12, 1)
 
-[node name="Environment" type="StaticBody2D" parent="." unique_id=1220376051]
+[node name="Environment" type="StaticBody2D" parent="." unique_id=1687102261]
+physics_material_override = SubResource("PhysicsMaterial_xxjbg")
 
-[node name="Floor" type="CollisionShape2D" parent="Environment" unique_id=363252992]
-position = Vector2(576, 632)
+[node name="Floor" type="CollisionShape2D" parent="Environment" unique_id=407585315]
+position = Vector2(960, 1063)
 shape = SubResource("RectangleShape2D_plat")
 
-[node name="Ceiling" type="CollisionShape2D" parent="Environment" unique_id=227001112]
-position = Vector2(576, 16)
+[node name="TextureRect" type="TextureRect" parent="Environment/Floor" unique_id=1868872426]
+offset_left = -960.0
+offset_top = -17.0
+offset_right = 960.0
+offset_bottom = 18.0
+texture = ExtResource("2_431da")
+stretch_mode = 1
+
+[node name="Ceiling" type="CollisionShape2D" parent="Environment" unique_id=1280071009]
+position = Vector2(960, 16)
 shape = SubResource("RectangleShape2D_plat")
 
-[node name="WallLeft" type="CollisionShape2D" parent="Environment" unique_id=1440545858]
-position = Vector2(16, 324)
+[node name="TextureRect" type="TextureRect" parent="Environment/Ceiling" unique_id=383040862]
+offset_left = -960.0
+offset_top = -17.0
+offset_right = 960.0
+offset_bottom = 18.0
+texture = ExtResource("2_431da")
+stretch_mode = 1
+
+[node name="WallLeft" type="CollisionShape2D" parent="Environment" unique_id=757624938]
+position = Vector2(16, 540)
 shape = SubResource("RectangleShape2D_wall")
 
-[node name="WallRight" type="CollisionShape2D" parent="Environment" unique_id=1436507095]
-position = Vector2(1136, 324)
+[node name="TextureRect" type="TextureRect" parent="Environment/WallLeft" unique_id=1454253523]
+offset_left = -16.0
+offset_top = -540.0
+offset_right = 16.0
+offset_bottom = 540.0
+texture = ExtResource("2_431da")
+stretch_mode = 1
+
+[node name="WallRight" type="CollisionShape2D" parent="Environment" unique_id=1953496044]
+position = Vector2(1904, 540)
 shape = SubResource("RectangleShape2D_wall")
 
-[node name="PlatformLeft" type="CollisionShape2D" parent="Environment" unique_id=303428061]
-position = Vector2(250, 450)
-shape = SubResource("RectangleShape2D_plat")
+[node name="TextureRect" type="TextureRect" parent="Environment/WallRight" unique_id=113914145]
+offset_left = -16.0
+offset_top = -540.0
+offset_right = 16.0
+offset_bottom = 540.0
+texture = ExtResource("2_431da")
+stretch_mode = 1
 
-[node name="PlatformRight" type="CollisionShape2D" parent="Environment" unique_id=1332623034]
-position = Vector2(902, 450)
-shape = SubResource("RectangleShape2D_plat")
+[node name="PlatformMid" type="CollisionShape2D" parent="Environment" unique_id=1808975483]
+position = Vector2(960, 820)
+shape = SubResource("RectangleShape2D_mid")
 
-[node name="LeftDoor" type="Area2D" parent="." unique_id=1511574135]
-position = Vector2(50, 550)
+[node name="TextureRect" type="TextureRect" parent="Environment/PlatformMid" unique_id=2094578223]
+offset_left = -250.0
+offset_top = -10.0
+offset_right = 250.0
+offset_bottom = 10.0
+texture = ExtResource("2_431da")
+stretch_mode = 1
 
-[node name="CollisionShape2D" type="CollisionShape2D" parent="LeftDoor" unique_id=301228991]
+[node name="LeftDoor" type="Area2D" parent="." unique_id=205264041]
+position = Vector2(50, 980)
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="LeftDoor" unique_id=804481]
+position = Vector2(0, -46)
 shape = SubResource("RectangleShape2D_wall")
 
-[node name="RightDoor" type="Area2D" parent="." unique_id=45729746]
-position = Vector2(1102, 550)
+[node name="RightDoor" type="Area2D" parent="." unique_id=11060742]
+position = Vector2(1820, 980)
 
-[node name="CollisionShape2D" type="CollisionShape2D" parent="RightDoor" unique_id=81451285]
+[node name="CollisionShape2D" type="CollisionShape2D" parent="RightDoor" unique_id=1679906609]
+position = Vector2(0, -46)
 shape = SubResource("RectangleShape2D_wall")
 
-[node name="SpawnLeft" type="Marker2D" parent="." unique_id=1110807654]
-position = Vector2(120, 550)
+[node name="SpawnCenter" type="Marker2D" parent="." unique_id=838993167]
+position = Vector2(960, 980)
 
-[node name="SpawnRight" type="Marker2D" parent="." unique_id=1600903999]
-position = Vector2(1032, 550)
+[node name="SpawnLeft" type="Marker2D" parent="." unique_id=1157694388]
+position = Vector2(150, 980)
 
-[node name="SpawnCenter" type="Marker2D" parent="." unique_id=2065619282]
-position = Vector2(576, 550)
-
-[node name="Player" parent="." unique_id=1765311499 instance=ExtResource("1_431da")]
-position = Vector2(146, 109)
+[node name="SpawnRight" type="Marker2D" parent="." unique_id=727803353]
+position = Vector2(1870, 980)

@@ -1,61 +1,132 @@
-[gd_scene format=3 uid="uid://uujkpup5ikis"]
+[gd_scene format=3 uid="uid://wide2_uid"]
 
 [ext_resource type="Script" uid="uid://bhcs2a6md7beb" path="res://scripts/world/Room.cs" id="1_room"]
+[ext_resource type="Texture2D" uid="uid://dcg5mxh7cvjxj" path="res://tile_0000.png" id="2_431da"]
+
+[sub_resource type="PhysicsMaterial" id="PhysicsMaterial_xxjbg"]
 
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_plat"]
-size = Vector2(350, 32)
+size = Vector2(3840, 35)
 
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_wall"]
-size = Vector2(32, 648)
+size = Vector2(32, 1080)
 
-[node name="Level4" type="Node2D" unique_id=1728896469]
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_step"]
+size = Vector2(350, 20)
+
+[node name="RoomWide2" type="Node2D"]
 script = ExtResource("1_room")
+LimitRight = 3840
+LimitBottom = 1080
 
-[node name="ColorRect" type="ColorRect" parent="." unique_id=359153748]
-offset_right = 1152.0
-offset_bottom = 648.0
-color = Color(0.05, 0.12, 0.1, 1)
+[node name="ColorRect" type="ColorRect" parent="."]
+offset_right = 3840.0
+offset_bottom = 1080.0
+color = Color(0.1, 0.08, 0.12, 1)
 
-[node name="Environment" type="StaticBody2D" parent="." unique_id=1517776824]
+[node name="Environment" type="StaticBody2D" parent="."]
+physics_material_override = SubResource("PhysicsMaterial_xxjbg")
 
-[node name="FloorLeft" type="CollisionShape2D" parent="Environment" unique_id=2124595714]
-position = Vector2(175, 632)
+[node name="Floor" type="CollisionShape2D" parent="Environment"]
+position = Vector2(1920, 1063)
 shape = SubResource("RectangleShape2D_plat")
 
-[node name="FloorRight" type="CollisionShape2D" parent="Environment" unique_id=1108080503]
-position = Vector2(977, 632)
+[node name="TextureRect" type="TextureRect" parent="Environment/Floor"]
+offset_left = -1920.0
+offset_top = -17.0
+offset_right = 1920.0
+offset_bottom = 18.0
+texture = ExtResource("2_431da")
+stretch_mode = 1
+
+[node name="Ceiling" type="CollisionShape2D" parent="Environment"]
+position = Vector2(1920, 16)
 shape = SubResource("RectangleShape2D_plat")
 
-[node name="WallLeft" type="CollisionShape2D" parent="Environment" unique_id=244058218]
-position = Vector2(16, 324)
+[node name="TextureRect" type="TextureRect" parent="Environment/Ceiling"]
+offset_left = -1920.0
+offset_top = -17.0
+offset_right = 1920.0
+offset_bottom = 18.0
+texture = ExtResource("2_431da")
+stretch_mode = 1
+
+[node name="WallLeft" type="CollisionShape2D" parent="Environment"]
+position = Vector2(16, 540)
 shape = SubResource("RectangleShape2D_wall")
 
-[node name="WallRight" type="CollisionShape2D" parent="Environment" unique_id=1444702076]
-position = Vector2(1136, 324)
+[node name="TextureRect" type="TextureRect" parent="Environment/WallLeft"]
+offset_left = -16.0
+offset_top = -540.0
+offset_right = 16.0
+offset_bottom = 540.0
+texture = ExtResource("2_431da")
+stretch_mode = 1
+
+[node name="WallRight" type="CollisionShape2D" parent="Environment"]
+position = Vector2(3824, 540)
 shape = SubResource("RectangleShape2D_wall")
 
-[node name="JumpPlat1" type="CollisionShape2D" parent="Environment" unique_id=146063037]
-position = Vector2(400, 500)
-shape = SubResource("RectangleShape2D_plat")
+[node name="TextureRect" type="TextureRect" parent="Environment/WallRight"]
+offset_left = -16.0
+offset_top = -540.0
+offset_right = 16.0
+offset_bottom = 540.0
+texture = ExtResource("2_431da")
+stretch_mode = 1
 
-[node name="JumpPlat2" type="CollisionShape2D" parent="Environment" unique_id=1610137318]
-position = Vector2(752, 500)
-shape = SubResource("RectangleShape2D_plat")
+[node name="Step1" type="CollisionShape2D" parent="Environment"]
+position = Vector2(1100, 850)
+shape = SubResource("RectangleShape2D_step")
 
-[node name="LeftDoor" type="Area2D" parent="." unique_id=885677894]
-position = Vector2(50, 550)
+[node name="TextureRect" type="TextureRect" parent="Environment/Step1"]
+offset_left = -175.0
+offset_top = -10.0
+offset_right = 175.0
+offset_bottom = 10.0
+texture = ExtResource("2_431da")
+stretch_mode = 1
 
-[node name="CollisionShape2D" type="CollisionShape2D" parent="LeftDoor" unique_id=207735317]
+[node name="Step2" type="CollisionShape2D" parent="Environment"]
+position = Vector2(1920, 720)
+shape = SubResource("RectangleShape2D_step")
+
+[node name="TextureRect" type="TextureRect" parent="Environment/Step2"]
+offset_left = -175.0
+offset_top = -10.0
+offset_right = 175.0
+offset_bottom = 10.0
+texture = ExtResource("2_431da")
+stretch_mode = 1
+
+[node name="Step3" type="CollisionShape2D" parent="Environment"]
+position = Vector2(2740, 850)
+shape = SubResource("RectangleShape2D_step")
+
+[node name="TextureRect" type="TextureRect" parent="Environment/Step3"]
+offset_left = -175.0
+offset_top = -10.0
+offset_right = 175.0
+offset_bottom = 10.0
+texture = ExtResource("2_431da")
+stretch_mode = 1
+
+[node name="LeftDoor" type="Area2D" parent="."]
+position = Vector2(50, 980)
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="LeftDoor"]
+position = Vector2(0, -46)
 shape = SubResource("RectangleShape2D_wall")
 
-[node name="RightDoor" type="Area2D" parent="." unique_id=12997406]
-position = Vector2(1102, 550)
+[node name="RightDoor" type="Area2D" parent="."]
+position = Vector2(3740, 980)
 
-[node name="CollisionShape2D" type="CollisionShape2D" parent="RightDoor" unique_id=1306234266]
+[node name="CollisionShape2D" type="CollisionShape2D" parent="RightDoor"]
+position = Vector2(0, -46)
 shape = SubResource("RectangleShape2D_wall")
 
-[node name="SpawnLeft" type="Marker2D" parent="." unique_id=677732245]
-position = Vector2(120, 550)
+[node name="SpawnLeft" type="Marker2D" parent="."]
+position = Vector2(150, 980)
 
-[node name="SpawnRight" type="Marker2D" parent="." unique_id=287872730]
-position = Vector2(1032, 550)
+[node name="SpawnRight" type="Marker2D" parent="."]
+position = Vector2(3790, 980)
