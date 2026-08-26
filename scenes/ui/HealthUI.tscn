@@ -1,14 +1,27 @@
 [gd_scene format=3 uid="uid://b6j8wif1vsg8o"]
 
 [ext_resource type="Script" uid="uid://b2c7mdpeyo8qk" path="res://scripts/ui/HealthUI.cs" id="1_14qox"]
+[ext_resource type="Texture2D" uid="uid://cvehuqhc2erm6" path="res://assets/ui/heart_full.png" id="2_5c5d3"]
+[ext_resource type="Texture2D" uid="uid://fbk5hy7gi6b5" path="res://assets/ui/heart_half.png" id="3_3wdnc"]
+[ext_resource type="Texture2D" uid="uid://bw8txl8tg72v5" path="res://assets/ui/heart_empty.png" id="4_0pcq7"]
 
-[node name="HealthUI" type="CanvasLayer" unique_id=832382491]
+[node name="HealthUI" type="CanvasLayer" unique_id=390177962]
 script = ExtResource("1_14qox")
+FullHeartTexture = ExtResource("2_5c5d3")
+HalfHeartTexture = ExtResource("3_3wdnc")
+EmptyHeartTexture = ExtResource("4_0pcq7")
 
-[node name="HBoxContainer" type="HBoxContainer" parent="." unique_id=1477127941]
-offset_left = 2.0
-offset_top = 1.0
-offset_right = 42.0
-offset_bottom = 41.0
-pivot_offset = Vector2(20, 20)
-theme_override_constants/separation = 8
+[node name="HBoxContainer" type="HBoxContainer" parent="." unique_id=901057889]
+offset_left = 35.0
+offset_top = 36.0
+offset_right = 65.0
+offset_bottom = 66.0
+
+[node name="Heart1" type="TextureRect" parent="HBoxContainer" unique_id=320897975]
+layout_mode = 2
+
+[node name="Heart2" type="TextureRect" parent="HBoxContainer" unique_id=2124389132]
+layout_mode = 2
+
+[node name="Heart3" type="TextureRect" parent="HBoxContainer" unique_id=139534890]
+layout_mode = 2

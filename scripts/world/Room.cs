@@ -1,15 +1,15 @@
 using Godot;
 using System.Collections.Generic;
+using System;
 
 public partial class Room : Node2D
 {
 	[Export] public bool IsLeftDoorClosed { get; set; } = false;
 	[Export] public bool IsRightDoorClosed { get; set; } = false;
 
-	// Новые настройки границ камеры для каждой комнаты прямо в инспекторе
 	[Export] public int LimitLeft { get; set; } = 0;
 	[Export] public int LimitTop { get; set; } = 0;
-	[Export] public int LimitRight { get; set; } = 1920;  // Можешь менять под ширину комнаты
+	[Export] public int LimitRight { get; set; } = 1920; 
 	[Export] public int LimitBottom { get; set; } = 1080;
 
 	[Export] public PackedScene EnemyScene { get; set; } = GD.Load<PackedScene>("res://scenes/enemies/Enemy.tscn");
@@ -24,10 +24,9 @@ public partial class Room : Node2D
 
 	public override void _Ready()
 	{
-		// 0. Автоматически выравниваем двери и точки спавна по границам комнаты
+		GenerateProceduralPlatforms();
 		SetupDoorsAndSpawns();
 
-		// 1. Инициализация игрока (если его нет на сцене)
 		Node2D player = GetTree().GetFirstNodeInGroup("Player") as Node2D;
 		if (player == null && _playerScene != null)
 		{
@@ -35,7 +34,6 @@ public partial class Room : Node2D
 			AddChild(player);
 		}
 
-		// 2. Позиционирование на точку спавна
 		string targetSpawnName = GameManager.Instance?.TargetSpawnPoint;
 		if (!string.IsNullOrEmpty(targetSpawnName))
 		{
@@ -46,11 +44,9 @@ public partial class Room : Node2D
 			}
 		}
 
-		// 3. Теперь, когда игрок гарантированно существует и добавлен в дерево, настраиваем камеру
 		var camera = player?.GetNodeOrNull<Camera2D>("Camera2D");
 		if (camera != null)
 		{
-			// Сначала жестко задаем лимиты
 			camera.LimitLeft = LimitLeft;
 			camera.LimitTop = LimitTop;
 			camera.LimitRight = LimitRight;
@@ -61,8 +57,6 @@ public partial class Room : Node2D
 			camera.DragHorizontalEnabled = false;
 			camera.DragVerticalEnabled = false;
 
-			// ГЛАВНОЕ ИСПРАВЛЕНИЕ: принудительно сбрасываем позицию камеры на игрока 
-			// в первый же кадр, чтобы она не отставала и не теряла персонажа при спавне
 			camera.ResetSmoothing();
 			camera.GlobalPosition = player.GlobalPosition;
 		}
@@ -74,12 +68,100 @@ public partial class Room : Node2D
 		CheckRoomClearance();
 	}
 
+	private void GenerateProceduralPlatforms()
+	{
+		if (HasNode("AutoPlatforms")) return;
+
+		var platformRoot = new Node2D();
+		platformRoot.Name = "AutoPlatforms";
+		AddChild(platformRoot);
+
+		// Уникальный сид для каждой комнаты
+		int roomSeed = 1337;
+		if (RunManager.Instance?.CurrentRoom != null)
+		{
+			var pos = RunManager.Instance.CurrentRoom.GridPos;
+			roomSeed = Mathf.Abs(pos.X * 73856093 ^ pos.Y * 19349663);
+		}
+
+		var rng = new RandomNumberGenerator();
+		rng.Seed = (ulong)roomSeed;
+
+		float usableWidth = LimitRight - 200f;
+		int platformCount = LimitRight > 2000 ? rng.RandiRange(10, 14) : rng.RandiRange(5, 8);
+
+		List<Vector2> spawnedPositions = new();
+
+		// НИЗКИЕ И БЛИЗКИЕ ЯРУСЫ: опускаем всё ближе к полу и уменьшаем шаги по высоте
+		// Самый нижний ярус теперь на высоте 920 (почти у земли), а верхний — 600
+		float[] heightTiers = { 920f, 780f, 640f };
+
+		foreach (var tierY in heightTiers)
+		{
+			int perTier = rng.RandiRange(1, LimitRight > 2000 ? 4 : 2);
+			float segmentWidth = usableWidth / perTier;
+
+			for (int i = 0; i < perTier; i++)
+			{
+				float minX = 150f + (i * segmentWidth);
+				float maxX = minX + segmentWidth - 100f;
+
+				if (maxX <= minX) continue;
+
+				float randomX = rng.RandfRange(minX, maxX);
+				float randomY = tierY + rng.RandfRange(-20f, 20f); 
+
+				Vector2 newPos = new Vector2(randomX, randomY);
+
+				bool tooClose = false;
+				foreach (var existingPos in spawnedPositions)
+				{
+					// Уменьшили минимальную дистанцию, чтобы они могли стоять ближе друг к другу
+					if (newPos.DistanceTo(existingPos) < 180f)
+					{
+						tooClose = true;
+						break;
+					}
+				}
+
+				if (tooClose) continue;
+				spawnedPositions.Add(newPos);
+
+				// Делаем платформы длиннее (от 250 до 400 пикселей), чтобы на них было проще приземляться
+				float width = rng.RandfRange(250f, 400f);
+				Vector2 size = new Vector2(width, 24f);
+
+				var staticBody = new StaticBody2D();
+				staticBody.Position = newPos;
+
+				var collision = new CollisionShape2D();
+				var rectShape = new RectangleShape2D();
+				rectShape.Size = size;
+				collision.Shape = rectShape;
+				staticBody.AddChild(collision);
+
+				var colorRect = new ColorRect();
+				colorRect.Size = size;
+				colorRect.Position = -size / 2f;
+				colorRect.Color = new Color(0.18f, 0.2f, 0.28f); 
+				
+				var borderRect = new ColorRect();
+				borderRect.Size = new Vector2(size.X, 4);
+				borderRect.Position = new Vector2(-size.X / 2f, -size.Y / 2f);
+				borderRect.Color = new Color(0.4f, 0.6f, 0.9f); 
+				
+				staticBody.AddChild(colorRect);
+				staticBody.AddChild(borderRect);
+
+				platformRoot.AddChild(staticBody);
+			}
+		}
+	}
+
 	private void SetupDoorsAndSpawns()
 	{
-		// Получаем реальную правую границу комнаты из лимитов камеры или текстуры фона
 		float rightWallX = LimitRight; 
 
-		// Правая дверь (ставим прямо у самой стены, отступив всего 40 пикселей внутрь)
 		var rightDoor = GetNodeOrNull<Area2D>("RightDoor");
 		if (rightDoor != null)
 		{
@@ -88,7 +170,6 @@ public partial class Room : Node2D
 			rightDoor.GlobalPosition = pos;
 		}
 
-		// Правый спавн (ставим вплотную к стене, отступив 60 пикселей, чтобы игрок не застревал в коллизии)
 		var spawnRight = GetNodeOrNull<Marker2D>("SpawnRight");
 		if (spawnRight != null)
 		{
@@ -97,15 +178,15 @@ public partial class Room : Node2D
 			spawnRight.GlobalPosition = pos;
 		}
 
-		// То же самое для левой стороны (на всякий случай)
 		var leftDoor = GetNodeOrNull<Area2D>("LeftDoor");
-		var spawnLeft = GetNodeOrNull<Marker2D>("SpawnLeft");
 		if (leftDoor != null)
 		{
 			var pos = leftDoor.GlobalPosition;
 			pos.X = 40;
 			leftDoor.GlobalPosition = pos;
 		}
+
+		var spawnLeft = GetNodeOrNull<Marker2D>("SpawnLeft");
 		if (spawnLeft != null)
 		{
 			var pos = spawnLeft.GlobalPosition;
@@ -135,14 +216,9 @@ public partial class Room : Node2D
 
 	private void SpawnEnemies()
 	{
-		if (EnemyScene == null)
-		{
-			GD.PrintErr("[Room] Ошибка: EnemyScene не назначена в Room.cs!");
-			return;
-		}
+		if (EnemyScene == null) return;
 
 		_activeEnemies.Clear();
-
 		Vector2 screenSize = GetViewportRect().Size;
 		var random = new RandomNumberGenerator();
 		random.Randomize();
@@ -154,7 +230,6 @@ public partial class Room : Node2D
 			Node2D enemyInstance = EnemyScene.Instantiate<Node2D>();
 			AddChild(enemyInstance);
 
-			// Подписываемся на выход из дерева сцены
 			enemyInstance.TreeExited += OnEnemyDefeated;
 			_activeEnemies.Add(enemyInstance);
 
@@ -163,18 +238,13 @@ public partial class Room : Node2D
 
 			enemyInstance.GlobalPosition = new Vector2(randomX, randomY);
 		}
-
-		GD.Print($"[Room] Заспавнено врагов: {_activeEnemies.Count}");
 	}
 
 	private void LockDoors()
 	{
 		_isBattleActive = true;
-
 		if (_leftDoor != null) _leftDoor.Monitoring = false;
 		if (_rightDoor != null) _rightDoor.Monitoring = false;
-
-		GD.Print($"[Room] Бой начался! Двери заблокированы.");
 	}
 
 	private void UnlockDoors()
@@ -196,8 +266,6 @@ public partial class Room : Node2D
 			_rightDoor.Monitoring = true;
 			CheckDoorOverlap(_rightDoor, OnRightDoorEntered);
 		}
-
-		GD.Print("[Room] Все враги повержены! Двери открыты.");
 	}
 
 	private void CheckDoorOverlap(Area2D door, System.Action<Node2D> onEntered)
@@ -215,15 +283,12 @@ public partial class Room : Node2D
 
 	private void OnEnemyDefeated()
 	{
-		// Важная задержка: удаляем врагов на следующем кадре физики, когда узел точно покинул дерево
 		CallDeferred(nameof(CheckEnemiesCount));
 	}
 
 	private void CheckEnemiesCount()
 	{
 		_activeEnemies.RemoveAll(e => !GodotObject.IsInstanceValid(e) || !e.IsInsideTree());
-
-		GD.Print($"[Room] Враг уничтожен! Осталось врагов: {_activeEnemies.Count}");
 
 		if (_activeEnemies.Count == 0 && _isBattleActive)
 		{
@@ -270,15 +335,10 @@ public partial class Room : Node2D
 		if (body.IsInGroup("Player") && !_isTransitioning && !_isBattleActive)
 		{
 			Vector2I targetDir = new Vector2I(-1, 0);
-
 			if (CanMoveToDirection(targetDir))
 			{
 				_isTransitioning = true;
 				RunManager.Instance?.MoveToRoom(targetDir, "SpawnRight");
-			}
-			else
-			{
-				GD.Print("[Room] Соседней комнаты слева нет на сетке, переход отменен.");
 			}
 		}
 	}
@@ -288,15 +348,10 @@ public partial class Room : Node2D
 		if (body.IsInGroup("Player") && !_isTransitioning && !_isBattleActive)
 		{
 			Vector2I targetDir = new Vector2I(1, 0);
-
 			if (CanMoveToDirection(targetDir))
 			{
 				_isTransitioning = true;
 				RunManager.Instance?.MoveToRoom(targetDir, "SpawnLeft");
-			}
-			else
-			{
-				GD.Print("[Room] Соседней комнаты справа нет на сетке, переход отменен.");
 			}
 		}
 	}
@@ -304,7 +359,6 @@ public partial class Room : Node2D
 	private bool CanMoveToDirection(Vector2I dir)
 	{
 		if (RunManager.Instance?.CurrentRoom == null) return false;
-
 		Vector2I targetGridPos = RunManager.Instance.CurrentRoom.GridPos + dir;
 		return RunManager.Instance.RoomGrid.ContainsKey(targetGridPos);
 	}
