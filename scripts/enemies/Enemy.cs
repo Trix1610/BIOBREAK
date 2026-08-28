@@ -3,7 +3,7 @@ using Godot;
 public partial class Enemy : CharacterBody2D
 {
 	[Export] public int MaxHealth { get; set; } = 30;
-	[Export] public float Speed { get; set; } = 80.0f; // Скорость ходьбы
+	[Export] public float Speed { get; set; } = 80.0f;
 	
 	public float Gravity = ProjectSettings.GetSetting("physics/2d/default_gravity").AsSingle();
 
@@ -12,14 +12,13 @@ public partial class Enemy : CharacterBody2D
 	private Node2D _player;
 	private ProgressBar _healthBar;
 	
-	// НОВОЕ: Таймер для кулдауна урона (чтобы не бить каждый кадр)
 	private float _damageCooldown = 0.0f;
-	private const float AttackCooldownTime = 1.0f; // 1 секунда между ударами
+	private const float AttackCooldownTime = 0.4f; // Кулдаун урона игроку
 
 	public override void _Ready()
 	{
 		CurrentHealth = MaxHealth;
-		AddToGroup("Enemies");
+		AddToGroup("Enemy"); // Важно для KillZone и других систем
 
 		_player = GetTree().GetFirstNodeInGroup("Player") as Node2D;
 		SetupHealthBar();
@@ -49,7 +48,6 @@ public partial class Enemy : CharacterBody2D
 
 	public override void _PhysicsProcess(double delta)
 	{
-		// НОВОЕ: Уменьшаем таймер кулдауна с каждым кадром
 		if (_damageCooldown > 0)
 		{
 			_damageCooldown -= (float)delta;
@@ -62,7 +60,7 @@ public partial class Enemy : CharacterBody2D
 			velocity.Y += Gravity * (float)delta;
 		}
 
-		if (_player != null)
+		if (_player != null && GodotObject.IsInstanceValid(_player))
 		{
 			float direction = Mathf.Sign(_player.GlobalPosition.X - GlobalPosition.X);
 			velocity.X = direction * Speed;
@@ -76,7 +74,7 @@ public partial class Enemy : CharacterBody2D
 		Velocity = velocity;
 		MoveAndSlide();
 
-		// Проверяем столкновения с игроком (только если кулдаун истек)
+		// Нанесение урона игроку при контакте по кулдауну
 		if (_damageCooldown <= 0)
 		{
 			for (int i = 0; i < GetSlideCollisionCount(); i++)
@@ -85,7 +83,7 @@ public partial class Enemy : CharacterBody2D
 				if (collision.GetCollider() is Player player)
 				{
 					player.TakeDamage(1, GlobalPosition);
-					_damageCooldown = AttackCooldownTime; // Включаем кулдаун на 1 секунду
+					_damageCooldown = AttackCooldownTime;
 					break; 
 				}
 			}
@@ -105,7 +103,9 @@ public partial class Enemy : CharacterBody2D
 		SpawnDamagePopup(damage);
 
 		Modulate = Colors.Red;
-		GetTree().CreateTimer(0.1f).Timeout += () => Modulate = Colors.White;
+		GetTree().CreateTimer(0.1f).Timeout += () => {
+			if (GodotObject.IsInstanceValid(this)) Modulate = Colors.White;
+		};
 
 		if (CurrentHealth <= 0)
 		{

@@ -16,12 +16,3 @@ offset_left = 35.0
 offset_top = 36.0
 offset_right = 65.0
 offset_bottom = 66.0
-
-[node name="Heart1" type="TextureRect" parent="HBoxContainer" unique_id=320897975]
-layout_mode = 2
-
-[node name="Heart2" type="TextureRect" parent="HBoxContainer" unique_id=2124389132]
-layout_mode = 2
-
-[node name="Heart3" type="TextureRect" parent="HBoxContainer" unique_id=139534890]
-layout_mode = 2
