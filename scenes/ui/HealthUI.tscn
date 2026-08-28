@@ -5,6 +5,12 @@
 [ext_resource type="Texture2D" uid="uid://fbk5hy7gi6b5" path="res://assets/ui/heart_half.png" id="3_3wdnc"]
 [ext_resource type="Texture2D" uid="uid://bw8txl8tg72v5" path="res://assets/ui/heart_empty.png" id="4_0pcq7"]
 
+[sub_resource type="StyleBoxEmpty" id="StyleBoxEmpty_5c5d3"]
+content_margin_left = 5.0
+content_margin_top = 5.0
+content_margin_right = 5.0
+content_margin_bottom = 5.0
+
 [node name="HealthUI" type="CanvasLayer" unique_id=390177962]
 script = ExtResource("1_14qox")
 FullHeartTexture = ExtResource("2_5c5d3")
@@ -16,3 +22,49 @@ offset_left = 35.0
 offset_top = 36.0
 offset_right = 65.0
 offset_bottom = 66.0
+
+[node name="GameOverScreen" type="Control" parent="." unique_id=1808751911]
+visible = false
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="ColorRect" type="ColorRect" parent="GameOverScreen" unique_id=592736824]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+color = Color(0, 0, 0, 0.58431375)
+
+[node name="VBoxContainer" type="VBoxContainer" parent="GameOverScreen" unique_id=1218250941]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="GameOverLabel" type="Label" parent="GameOverScreen/VBoxContainer" unique_id=1917031068]
+process_mode = 3
+layout_mode = 2
+theme_override_font_sizes/font_size = 120
+text = "GAME OVER"
+horizontal_alignment = 1
+vertical_alignment = 1
+uppercase = true
+
+[node name="RestartButton" type="Button" parent="GameOverScreen/VBoxContainer" unique_id=1607207311]
+process_mode = 3
+custom_minimum_size = Vector2(200, 50)
+layout_mode = 2
+size_flags_horizontal = 4
+theme_override_font_sizes/font_size = 60
+theme_override_styles/normal = SubResource("StyleBoxEmpty_5c5d3")
+text = "Restart"
+
+[connection signal="pressed" from="GameOverScreen/VBoxContainer/RestartButton" to="." method="_on_restart_button_pressed"]

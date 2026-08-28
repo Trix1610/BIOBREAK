@@ -215,13 +215,10 @@ public partial class Room : Node2D
 				UnlockDoors();
 			}
 		}
-		else if (body.IsInGroup("Player"))
+		else if (body is Player player)
 		{
-			var spawn = GetNodeOrNull<Marker2D>("SpawnCenter") ?? GetNodeOrNull<Marker2D>("SpawnLeft");
-			if (spawn != null)
-			{
-				body.GlobalPosition = spawn.GlobalPosition;
-			}
+			// Наносим смертельный урон или сразу вызываем смерть
+			player.TakeDamage(999, player.GlobalPosition); 
 		}
 	}
 

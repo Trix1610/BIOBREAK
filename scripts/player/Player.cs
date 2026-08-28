@@ -7,6 +7,7 @@ public partial class Player : CharacterBody2D
 	
 	[Export] public int MaxHealth { get; set; } = 8;
 	[Export] public int CurrentHealth { get; set; } = 6;
+	
 	[Export] private NodePath healthUIPath;
 	private HealthUI _healthUI;
 
@@ -30,6 +31,9 @@ public partial class Player : CharacterBody2D
 	{
 		AddToGroup("Player");
 
+		CurrentHealth = 6; 
+		GD.Print($"[Player _Ready] Игрок создан. MaxHealth: {MaxHealth}, CurrentHealth: {CurrentHealth}");
+
 		OrganManager = GetNodeOrNull<OrganManager>("OrganManager");
 		if (OrganManager == null)
 		{
@@ -37,15 +41,20 @@ public partial class Player : CharacterBody2D
 			AddChild(OrganManager);
 		}
 
-		// Прямое обращение к глобальному HealthUI при спавне!
-		if (HealthUI.Instance != null) // Если используешь синглтон, либо просто обращайся к автозагрузке
-		{
-			// Если в Autoload имя узла HealthUI, то можно использовать его напрямую:
-			// HealthUI.Initialize(this); (но проще через синглтон ниже)
-		}
-
 		EquipStartingWeapon();
 		CallDeferred(nameof(PositionAtSpawnPoint));
+
+		// Уведомляем HealthUI о появлении
+		CallDeferred(nameof(NotifyHealthUI));
+	}
+
+	private void NotifyHealthUI()
+	{
+		if (HealthUI.Instance != null)
+		{
+			GD.Print("[Player] Уведомляем HealthUI о своем появлении.");
+			HealthUI.Instance.SetupForPlayer(this);
+		}
 	}
 
 	private void EquipStartingWeapon()
@@ -184,7 +193,6 @@ public partial class Player : CharacterBody2D
 		CurrentHealth -= damage;
 		CurrentHealth = Mathf.Clamp(CurrentHealth, 0, MaxHealth);
 
-		// Прямой вызов глобального UI!
 		if (HealthUI.Instance != null)
 		{
 			HealthUI.Instance.UpdateHealth(CurrentHealth);
@@ -219,5 +227,21 @@ public partial class Player : CharacterBody2D
 	private void Die()
 	{
 		GD.Print("Игрок погиб!");
+
+		if (IsInGroup("Player"))
+		{
+			RemoveFromGroup("Player");
+		}
+
+		if (RunManager.Instance != null)
+		{
+			RunManager.Instance.ShowGameOver();
+		}
+
+		SetPhysicsProcess(false);
+		SetProcessInput(false);
+
+		var sprite = GetNodeOrNull<Sprite2D>("Sprite2D");
+		if (sprite != null) sprite.Visible = false;
 	}
 }
