@@ -243,5 +243,17 @@ public partial class Player : CharacterBody2D
 
 		var sprite = GetNodeOrNull<Sprite2D>("Sprite2D");
 		if (sprite != null) sprite.Visible = false;
+
+		// Отключаем коллизию, чтобы враги не могли взаимодействовать с мертвым игроком
+		CollisionLayer = 0;
+		CollisionMask = 0;
+
+		// Удаляем игрока из сцены с небольшой задержкой, чтобы успели отработать другие системы
+		CallDeferred(nameof(DestroyPlayer));
+	}
+
+	private void DestroyPlayer()
+	{
+		QueueFree();
 	}
 }

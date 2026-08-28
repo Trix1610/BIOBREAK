@@ -47,7 +47,7 @@ public partial class HealthUI : CanvasLayer
 	{
 		if (_container == null) return;
 
-		// МГНОВЕННО удаляем старые узлы, чтобы они сразу исчезли из контейнера
+		// Удаляем старые узлы синхронно (безопасно для UI контейнера)
 		foreach (Node child in _container.GetChildren())
 		{
 			child.Free();

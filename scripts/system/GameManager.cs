@@ -9,6 +9,11 @@ public partial class GameManager : Node
 
 	public override void _Ready()
 	{
+		if (Instance != null && Instance != this)
+		{
+			QueueFree();
+			return;
+		}
 		Instance = this;
 	}
 }

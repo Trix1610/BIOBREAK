@@ -103,7 +103,8 @@ public partial class Enemy : CharacterBody2D
 		SpawnDamagePopup(damage);
 
 		Modulate = Colors.Red;
-		GetTree().CreateTimer(0.1f).Timeout += () => {
+		var timer = GetTree().CreateTimer(0.1f);
+		timer.Timeout += () => {
 			if (GodotObject.IsInstanceValid(this)) Modulate = Colors.White;
 		};
 
@@ -119,21 +120,29 @@ public partial class Enemy : CharacterBody2D
 		popup.Text = $"-{damage}";
 		popup.AddThemeColorOverride("font_color", Colors.Yellow);
 		popup.AddThemeFontSizeOverride("font_size", 12);
-		
+
 		GetTree().CurrentScene.AddChild(popup);
 		popup.GlobalPosition = GlobalPosition + new Vector2(-10, -35);
 
 		var tween = GetTree().CreateTween().SetParallel(true);
-		
+
 		tween.TweenProperty(popup, "global_position", popup.GlobalPosition + new Vector2(0, -15), 0.4f);
 		tween.TweenProperty(popup, "modulate:a", 0.0f, 0.4f);
 
 		tween.Chain().TweenCallback(Callable.From(() => {
-			if (GodotObject.IsInstanceValid(popup))
+			if (GodotObject.IsInstanceValid(popup) && popup.IsInsideTree())
 			{
 				popup.QueueFree();
 			}
 		}));
+
+		// Дополнительная защита: если враг умирает до завершения анимации, удаляем popup
+		TreeExiting += () => {
+			if (GodotObject.IsInstanceValid(popup) && popup.IsInsideTree())
+			{
+				popup.QueueFree();
+			}
+		};
 	}
 
 	private void Die()

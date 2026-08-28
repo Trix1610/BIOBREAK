@@ -24,63 +24,70 @@ public partial class Room : Node2D
 
 	public async override void _Ready()
 	{
-		GenerateProceduralPlatforms();
-		SetupDoorsAndSpawns();
-		SetupKillZone();
-
-		Node2D player = GetTree().GetFirstNodeInGroup("Player") as Node2D;
-		if (player == null && _playerScene != null)
+		try
 		{
-			player = _playerScene.Instantiate<Node2D>();
-			AddChild(player);
-		}
+			GenerateProceduralPlatforms();
+			SetupDoorsAndSpawns();
+			SetupKillZone();
 
-		string targetSpawnName = GameManager.Instance?.TargetSpawnPoint;
-		if (!string.IsNullOrEmpty(targetSpawnName))
-		{
-			Marker2D spawnPoint = GetNodeOrNull<Marker2D>(targetSpawnName);
-			if (spawnPoint != null && player != null)
+			Node2D player = GetTree().GetFirstNodeInGroup("Player") as Node2D;
+			if (player == null && _playerScene != null)
 			{
-				player.GlobalPosition = spawnPoint.GlobalPosition;
+				player = _playerScene.Instantiate<Node2D>();
+				AddChild(player);
 			}
-		}
 
-		var camera = player?.GetNodeOrNull<Camera2D>("Camera2D");
-		if (camera != null)
+			string targetSpawnName = GameManager.Instance?.TargetSpawnPoint;
+			if (!string.IsNullOrEmpty(targetSpawnName))
+			{
+				Marker2D spawnPoint = GetNodeOrNull<Marker2D>(targetSpawnName);
+				if (spawnPoint != null && player != null)
+				{
+					player.GlobalPosition = spawnPoint.GlobalPosition;
+				}
+			}
+
+			var camera = player?.GetNodeOrNull<Camera2D>("Camera2D");
+			if (camera != null)
+			{
+				camera.LimitLeft = LimitLeft;
+				camera.LimitTop = LimitTop;
+				camera.LimitRight = LimitRight;
+				camera.LimitBottom = LimitBottom;
+
+				camera.LimitSmoothed = true;
+				camera.PositionSmoothingEnabled = true;
+				camera.DragHorizontalEnabled = false;
+				camera.DragVerticalEnabled = false;
+
+				camera.ResetSmoothing();
+				camera.GlobalPosition = player.GlobalPosition;
+			}
+
+			_leftDoor = GetNodeOrNull<Area2D>("LeftDoor");
+			_rightDoor = GetNodeOrNull<Area2D>("RightDoor");
+
+			SetupDoors();
+			CheckRoomClearance();
+
+			// ЗАЩИТА ОТ ДВОЙНОГО СРАБАТЫВАНИЯ:
+			// Временно выключаем двери при входе в комнату, чтобы игрок успел отойти от спавна
+			if (_leftDoor != null) _leftDoor.Monitoring = false;
+			if (_rightDoor != null) _rightDoor.Monitoring = false;
+
+			// Ждем 0.3 секунды, давая игроку время сойти с точки спавна/двери
+			await ToSignal(GetTree().CreateTimer(0.3f), "timeout");
+
+			// Включаем обратно только те двери, которые должны работать и если нет активного боя
+			if (_leftDoor != null && !IsLeftDoorClosed && !_isBattleActive)
+				_leftDoor.Monitoring = true;
+			if (_rightDoor != null && !IsRightDoorClosed && !_isBattleActive)
+				_rightDoor.Monitoring = true;
+		}
+		catch (System.Exception ex)
 		{
-			camera.LimitLeft = LimitLeft;
-			camera.LimitTop = LimitTop;
-			camera.LimitRight = LimitRight;
-			camera.LimitBottom = LimitBottom;
-			
-			camera.LimitSmoothed = true;
-			camera.PositionSmoothingEnabled = true;
-			camera.DragHorizontalEnabled = false;
-			camera.DragVerticalEnabled = false;
-
-			camera.ResetSmoothing();
-			camera.GlobalPosition = player.GlobalPosition;
+			GD.PrintErr($"[Room] Ошибка в _Ready: {ex.Message}");
 		}
-
-		_leftDoor = GetNodeOrNull<Area2D>("LeftDoor");
-		_rightDoor = GetNodeOrNull<Area2D>("RightDoor");
-
-		SetupDoors();
-		CheckRoomClearance();
-
-		// ЗАЩИТА ОТ ДВОЙНОГО СРАБАТЫВАНИЯ:
-		// Временно выключаем двери при входе в комнату, чтобы игрок успел отойти от спавна
-		if (_leftDoor != null) _leftDoor.Monitoring = false;
-		if (_rightDoor != null) _rightDoor.Monitoring = false;
-
-		// Ждем 0.3 секунды, давая игроку время сойти с точки спавна/двери
-		await ToSignal(GetTree().CreateTimer(0.3f), "timeout");
-
-		// Включаем обратно только те двери, которые должны работать и если нет активного боя
-		if (_leftDoor != null && !IsLeftDoorClosed && !_isBattleActive) 
-			_leftDoor.Monitoring = true;
-		if (_rightDoor != null && !IsRightDoorClosed && !_isBattleActive) 
-			_rightDoor.Monitoring = true;
 	}
 
 	private void GenerateProceduralPlatforms()

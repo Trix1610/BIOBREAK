@@ -27,6 +27,11 @@ public partial class RunManager : Node
 
 	public override void _Ready()
 	{
+		if (Instance != null && Instance != this)
+		{
+			QueueFree();
+			return;
+		}
 		Instance = this;
 
 		// Автоматически создаем слой затемнения поверх всех окон при запуске
@@ -141,7 +146,9 @@ public partial class RunManager : Node
 				// 2. Меняем сцену в темноте
 				CallDeferred(MethodName.ChangeSceneDeferred, nextRoom.RoomScene.ResourcePath);
 
-				await ToSignal(GetTree().CreateTimer(0.05f), "timeout");
+				// Ждем завершения смены сцены (TreeChanged сигнал)
+				await ToSignal(GetTree(), SceneTree.SignalName.TreeChanged);
+				await ToSignal(GetTree(), SceneTree.SignalName.ProcessFrame);
 
 				// 3. Плавно возвращаем видимость обратно
 				Tween tweenOut = CreateTween();
