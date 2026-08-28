@@ -79,14 +79,14 @@ position = Vector2(0, -46)
 shape = SubResource("RectangleShape2D_wall")
 
 [node name="RightDoor" type="Area2D" parent="." unique_id=998578884]
-position = Vector2(3740, 980)
+position = Vector2(3779, 1001)
 
 [node name="CollisionShape2D" type="CollisionShape2D" parent="RightDoor" unique_id=1620514894]
-position = Vector2(0, -46)
+position = Vector2(12, -34)
 shape = SubResource("RectangleShape2D_wall")
 
 [node name="SpawnLeft" type="Marker2D" parent="." unique_id=1001935904]
-position = Vector2(150, 980)
+position = Vector2(236, 980)
 
 [node name="SpawnRight" type="Marker2D" parent="." unique_id=1053019478]
-position = Vector2(3790, 980)
+position = Vector2(3691, 993)

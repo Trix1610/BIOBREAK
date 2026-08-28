@@ -47,25 +47,25 @@ texture = ExtResource("2_431da")
 stretch_mode = 1
 
 [node name="WallLeft" type="CollisionShape2D" parent="Environment" unique_id=757624938]
-position = Vector2(16, 540)
+position = Vector2(-50, 539)
 shape = SubResource("RectangleShape2D_wall")
 
 [node name="TextureRect" type="TextureRect" parent="Environment/WallLeft" unique_id=1454253523]
-offset_left = -16.0
+offset_left = 17.0
 offset_top = -540.0
-offset_right = 16.0
+offset_right = 49.0
 offset_bottom = 540.0
 texture = ExtResource("2_431da")
 stretch_mode = 1
 
 [node name="WallRight" type="CollisionShape2D" parent="Environment" unique_id=1953496044]
-position = Vector2(1904, 540)
+position = Vector2(1969, 538)
 shape = SubResource("RectangleShape2D_wall")
 
 [node name="TextureRect" type="TextureRect" parent="Environment/WallRight" unique_id=113914145]
-offset_left = -16.0
+offset_left = -48.0
 offset_top = -540.0
-offset_right = 16.0
+offset_right = -16.0
 offset_bottom = 540.0
 texture = ExtResource("2_431da")
 stretch_mode = 1
@@ -74,21 +74,21 @@ stretch_mode = 1
 position = Vector2(50, 980)
 
 [node name="CollisionShape2D" type="CollisionShape2D" parent="LeftDoor" unique_id=804481]
-position = Vector2(0, -46)
+position = Vector2(-66, -441)
 shape = SubResource("RectangleShape2D_wall")
 
 [node name="RightDoor" type="Area2D" parent="." unique_id=11060742]
-position = Vector2(1820, 980)
+position = Vector2(1865, 1008)
 
 [node name="CollisionShape2D" type="CollisionShape2D" parent="RightDoor" unique_id=1679906609]
-position = Vector2(0, -46)
+position = Vector2(72, -471)
 shape = SubResource("RectangleShape2D_wall")
 
 [node name="SpawnCenter" type="Marker2D" parent="." unique_id=838993167]
 position = Vector2(960, 980)
 
 [node name="SpawnLeft" type="Marker2D" parent="." unique_id=1157694388]
-position = Vector2(150, 980)
+position = Vector2(384, 977)
 
 [node name="SpawnRight" type="Marker2D" parent="." unique_id=727803353]
-position = Vector2(1870, 980)
+position = Vector2(1777, 999)

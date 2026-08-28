@@ -112,9 +112,16 @@ public partial class RunManager : Node
 
 	public async void MoveToRoom(Vector2I direction, string targetSpawnPoint)
 	{
+		// ДЕБАГ: выводим текущую комнату и направление
+		GD.Print($"[RunManager] Попытка пойти из комнаты {CurrentRoom.GridPos} в направлении {direction}");
+		
 		if (CurrentRoom != null && CurrentRoom.Neighbors.ContainsKey(direction))
 		{
 			RoomNode nextRoom = CurrentRoom.Neighbors[direction];
+			
+			// ДЕБАГ: выводим куда именно попадаем
+			GD.Print($"[RunManager] Успех! Следующая комната найдена по координатам: {nextRoom.GridPos}, сцена: {nextRoom.RoomScene.ResourcePath}");
+		
 			CurrentRoom = nextRoom;
 			CurrentRoom.IsVisited = true;
 

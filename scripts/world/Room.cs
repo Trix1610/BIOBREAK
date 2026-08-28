@@ -22,10 +22,11 @@ public partial class Room : Node2D
 	private Area2D _leftDoor;
 	private Area2D _rightDoor;
 
-	public override void _Ready()
+	public async override void _Ready()
 	{
 		GenerateProceduralPlatforms();
 		SetupDoorsAndSpawns();
+		SetupKillZone();
 
 		Node2D player = GetTree().GetFirstNodeInGroup("Player") as Node2D;
 		if (player == null && _playerScene != null)
@@ -66,6 +67,20 @@ public partial class Room : Node2D
 
 		SetupDoors();
 		CheckRoomClearance();
+
+		// ЗАЩИТА ОТ ДВОЙНОГО СРАБАТЫВАНИЯ:
+		// Временно выключаем двери при входе в комнату, чтобы игрок успел отойти от спавна
+		if (_leftDoor != null) _leftDoor.Monitoring = false;
+		if (_rightDoor != null) _rightDoor.Monitoring = false;
+
+		// Ждем 0.3 секунды, давая игроку время сойти с точки спавна/двери
+		await ToSignal(GetTree().CreateTimer(0.3f), "timeout");
+
+		// Включаем обратно только те двери, которые должны работать и если нет активного боя
+		if (_leftDoor != null && !IsLeftDoorClosed && !_isBattleActive) 
+			_leftDoor.Monitoring = true;
+		if (_rightDoor != null && !IsRightDoorClosed && !_isBattleActive) 
+			_rightDoor.Monitoring = true;
 	}
 
 	private void GenerateProceduralPlatforms()
@@ -93,7 +108,6 @@ public partial class Room : Node2D
 		List<Vector2> spawnedPositions = new();
 
 		// НИЗКИЕ И БЛИЗКИЕ ЯРУСЫ: опускаем всё ближе к полу и уменьшаем шаги по высоте
-		// Самый нижний ярус теперь на высоте 920 (почти у земли), а верхний — 600
 		float[] heightTiers = { 920f, 780f, 640f };
 
 		foreach (var tierY in heightTiers)
@@ -116,7 +130,6 @@ public partial class Room : Node2D
 				bool tooClose = false;
 				foreach (var existingPos in spawnedPositions)
 				{
-					// Уменьшили минимальную дистанцию, чтобы они могли стоять ближе друг к другу
 					if (newPos.DistanceTo(existingPos) < 180f)
 					{
 						tooClose = true;
@@ -127,7 +140,6 @@ public partial class Room : Node2D
 				if (tooClose) continue;
 				spawnedPositions.Add(newPos);
 
-				// Делаем платформы длиннее (от 250 до 400 пикселей), чтобы на них было проще приземляться
 				float width = rng.RandfRange(250f, 400f);
 				Vector2 size = new Vector2(width, 24f);
 
@@ -157,16 +169,79 @@ public partial class Room : Node2D
 			}
 		}
 	}
+	
+	private void SetupKillZone()
+	{
+		// Если зона уже есть (например, вручную создали), не плодим дубликаты
+		if (HasNode("KillZone")) return;
 
+		var killZone = new Area2D();
+		killZone.Name = "KillZone";
+		
+		var collision = new CollisionShape2D();
+		var rectShape = new RectangleShape2D();
+		
+		// Делаем зону широкой на всю комнату и высокой на 100 пикселей,
+		// располагаем её ниже нижней границы экрана (например, на LimitBottom + 100)
+		float width = LimitRight + 500f; // С запасом по бокам
+		rectShape.Size = new Vector2(width, 100f);
+		collision.Shape = rectShape;
+		
+		// Ставим её по центру по ширине и ниже пола
+		collision.Position = new Vector2(LimitRight / 2f, LimitBottom + 100f);
+		
+		killZone.AddChild(collision);
+		AddChild(killZone);
+
+		// Подписываемся на событие падения
+		killZone.BodyEntered += OnKillZoneBodyEntered;
+	}
+
+	private void OnKillZoneBodyEntered(Node2D body)
+	{
+		if (body.IsInGroup("Enemy"))
+		{
+			GD.Print($"[KillZone] Враг упал в зону! Всего врагов до удаления: {_activeEnemies.Count}");
+			body.QueueFree();
+			
+			// Принудительно убираем из списка прямо сейчас, не дожидаясь кадров
+			_activeEnemies.Remove(body);
+			
+			GD.Print($"[KillZone] Осталось в списке после ручного удаления: {_activeEnemies.Count}");
+			
+			if (_activeEnemies.Count == 0 && _isBattleActive)
+			{
+				GD.Print("[KillZone] Все враги повержены через KillZone! Открываем двери.");
+				UnlockDoors();
+			}
+		}
+		else if (body.IsInGroup("Player"))
+		{
+			var spawn = GetNodeOrNull<Marker2D>("SpawnCenter") ?? GetNodeOrNull<Marker2D>("SpawnLeft");
+			if (spawn != null)
+			{
+				body.GlobalPosition = spawn.GlobalPosition;
+			}
+		}
+	}
+
+	private async void DelayedCheckEnemies()
+	{
+		// Ждем один кадр, чтобы QueueFree() точно завершился
+		await ToSignal(GetTree(), SceneTree.SignalName.ProcessFrame);
+		CheckEnemiesCount();
+	}
+	
 	private void SetupDoorsAndSpawns()
 	{
 		float rightWallX = LimitRight; 
 
+		// --- ПРАВАЯ СТОРОНА ---
 		var rightDoor = GetNodeOrNull<Area2D>("RightDoor");
 		if (rightDoor != null)
 		{
 			var pos = rightDoor.GlobalPosition;
-			pos.X = rightWallX - 40; 
+			pos.X = rightWallX - 40; // Дверь остается у стены
 			rightDoor.GlobalPosition = pos;
 		}
 
@@ -174,15 +249,17 @@ public partial class Room : Node2D
 		if (spawnRight != null)
 		{
 			var pos = spawnRight.GlobalPosition;
-			pos.X = rightWallX - 60; 
+			// Было 60px от стены, стало 100px (на 40px дальше вглубь комнаты)
+			pos.X = rightWallX - 100; 
 			spawnRight.GlobalPosition = pos;
 		}
 
+		// --- ЛЕВАЯ СТОРОНА ---
 		var leftDoor = GetNodeOrNull<Area2D>("LeftDoor");
 		if (leftDoor != null)
 		{
 			var pos = leftDoor.GlobalPosition;
-			pos.X = 40;
+			pos.X = 40; // Дверь остается у стены
 			leftDoor.GlobalPosition = pos;
 		}
 
@@ -190,7 +267,8 @@ public partial class Room : Node2D
 		if (spawnLeft != null)
 		{
 			var pos = spawnLeft.GlobalPosition;
-			pos.X = 60;
+			// Было 60px от стены, стало 100px (на 40px дальше вглубь комнаты)
+			pos.X = 100;
 			spawnLeft.GlobalPosition = pos;
 		}
 	}
@@ -289,6 +367,8 @@ public partial class Room : Node2D
 	private void CheckEnemiesCount()
 	{
 		_activeEnemies.RemoveAll(e => !GodotObject.IsInstanceValid(e) || !e.IsInsideTree());
+
+		GD.Print($"[CheckEnemiesCount] Активных врагов: {_activeEnemies.Count}, Бой активен: {_isBattleActive}");
 
 		if (_activeEnemies.Count == 0 && _isBattleActive)
 		{
