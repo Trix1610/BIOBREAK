@@ -4,7 +4,7 @@
 
 [resource]
 script = ExtResource("1_2q7bn")
-WeaponName = "Пулемет"
+WeaponName = "Machingun"
 WeaponType = 1
 FireRate = 0.1
 BulletSpeed = 700.0

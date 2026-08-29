@@ -60,7 +60,7 @@ public partial class Player : CharacterBody2D
 	{
 		if (StartingWeaponData == null)
 		{
-			StartingWeaponData = GD.Load<WeaponData>("res://resources/weapons/projectile/machingun.tres");
+			StartingWeaponData = GD.Load<WeaponData>("res://resources/weapons/projectile/pistol.tres");
 		}
 
 		if (StartingWeaponData != null)
