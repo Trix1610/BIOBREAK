@@ -14,7 +14,7 @@ public partial class RunManager : Node
 	// Ссылка на черный экран для фейда
 	private ColorRect _fadeRect;
 
-	// Ссылка на экран смерти и его префаб (укажи правильный путь к своей сцене GameOverScreen)
+	// Ссылка на экран смерти и его префаб
 	private PackedScene _gameOverScene = GD.Load<PackedScene>("res://scenes/ui/GameOverScreen.tscn");
 	private Control _gameOverInstance;
 
@@ -36,12 +36,8 @@ public partial class RunManager : Node
 
 		// Автоматически создаем слой затемнения поверх всех окон при запуске
 		SetupFadeLayer();
-
-		// Автоматически запускаем раунд при старте, если он еще не активен
-		if (!IsRunActive)
-		{
-			StartNewRun();
-		}
+		
+		// Автоматический вызов StartNewRun() здесь убран, чтобы игра ждала нажатия кнопки «Старт» в меню!
 	}
 
 	private void SetupFadeLayer()
@@ -62,11 +58,17 @@ public partial class RunManager : Node
 		canvasLayer.AddChild(_fadeRect);
 	}
 
-	// МЕТОД ЗАПУСКА НОВОГО ЗАБЕГА
-	public void StartNewRun(int runSeed = 0)
+	// МЕТОД ЗАПУСКА НОВОГО ЗАБЕГА (из главного меню или рестарта)
+	public async void StartNewRun(int runSeed = 0)
 	{
 		// Очищаем экран смерти, если он остался с прошлого раза
 		ClearGameOverScreen();
+
+		// Мгновенно закрываем экран черным полотном, скрывая любые кадры инициализации
+		if (_fadeRect != null)
+		{
+			_fadeRect.Modulate = new Color(1, 1, 1, 1);
+		}
 
 		IsRunActive = true;
 		GenerateFixedLinearFloor();
@@ -78,7 +80,19 @@ public partial class RunManager : Node
 				GameManager.Instance.TargetSpawnPoint = "SpawnCenter";
 			}
 
-			CallDeferred(MethodName.ChangeSceneDeferred, CurrentRoom.RoomScene.ResourcePath);
+			// Меняем сцену
+			GetTree().ChangeSceneToFile(CurrentRoom.RoomScene.ResourcePath);
+
+			// Ждем полной инициализации узлов и камеры в новой сцене
+			await ToSignal(GetTree(), SceneTree.SignalName.TreeChanged);
+			await ToSignal(GetTree(), SceneTree.SignalName.ProcessFrame);
+
+			// Плавно проявляем готовую сцену из темноты
+			if (_fadeRect != null)
+			{
+				Tween tweenOut = CreateTween();
+				tweenOut.TweenProperty(_fadeRect, "modulate:a", 0.0f, 0.3f);
+			}
 		}
 	}
 
@@ -138,15 +152,15 @@ public partial class RunManager : Node
 
 			if (_fadeRect != null)
 			{
-				// 1. Плавно затемняем экран
+				// 1. Плавно затемняем экран перед переходом
 				Tween tweenIn = CreateTween();
 				tweenIn.TweenProperty(_fadeRect, "modulate:a", 1.0f, 0.2f);
 				await ToSignal(tweenIn, "finished");
 
 				// 2. Меняем сцену в темноте
-				CallDeferred(MethodName.ChangeSceneDeferred, nextRoom.RoomScene.ResourcePath);
+				GetTree().ChangeSceneToFile(nextRoom.RoomScene.ResourcePath);
 
-				// Ждем завершения смены сцены (TreeChanged сигнал)
+				// Ждем завершения смены сцены
 				await ToSignal(GetTree(), SceneTree.SignalName.TreeChanged);
 				await ToSignal(GetTree(), SceneTree.SignalName.ProcessFrame);
 
@@ -156,7 +170,7 @@ public partial class RunManager : Node
 			}
 			else
 			{
-				CallDeferred(MethodName.ChangeSceneDeferred, nextRoom.RoomScene.ResourcePath);
+				GetTree().ChangeSceneToFile(nextRoom.RoomScene.ResourcePath);
 			}
 		}
 		else
@@ -169,12 +183,10 @@ public partial class RunManager : Node
 
 	public void ShowGameOver()
 	{
-		// Если экран смерти еще не создан, инстанциируем его
 		if (_gameOverInstance == null && _gameOverScene != null)
 		{
 			_gameOverInstance = _gameOverScene.Instantiate<Control>();
 			
-			// Вешаем его на тот же CanvasLayer, где живет _fadeRect (слой 100 — поверх всего)
 			if (_fadeRect != null && _fadeRect.GetParent() is CanvasLayer canvasLayer)
 			{
 				canvasLayer.AddChild(_gameOverInstance);
@@ -184,11 +196,9 @@ public partial class RunManager : Node
 		if (_gameOverInstance != null)
 		{
 			_gameOverInstance.Visible = true;
-			// Убеждаемся, что экран и его кнопки работают даже во время паузы игры
 			_gameOverInstance.ProcessMode = Node.ProcessModeEnum.Always;
 		}
 
-		// Ставим игру на паузу
 		GetTree().Paused = true;
 	}
 
@@ -202,15 +212,9 @@ public partial class RunManager : Node
 		}
 	}
 
-	// Универсальный метод рестарта (вызывай его из кнопки рестарта на экране смерти)
 	public void RestartGame()
 	{
-		GetTree().Paused = false; // Обязательно снимаем игру с паузы
-		StartNewRun();            // Запускаем забег с чистого листа
-	}
-
-	private void ChangeSceneDeferred(string scenePath)
-	{
-		GetTree().ChangeSceneToFile(scenePath);
+		GetTree().Paused = false; 
+		StartNewRun();            
 	}
 }

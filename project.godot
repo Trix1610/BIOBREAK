@@ -11,7 +11,7 @@ config_version=5
 [application]
 
 config/name="BIOBREAK"
-run/main_scene="uid://b3t7p83kicrs6"
+run/main_scene="uid://ovlsykd6wtnt"
 config/features=PackedStringArray("4.7", "C#", "Forward Plus")
 config/icon="res://icon.svg"
 

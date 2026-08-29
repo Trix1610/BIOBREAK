@@ -27,7 +27,7 @@ public partial class Room : Node2D
 			Vector2I roomGridPos = RunManager.Instance?.CurrentRoom?.GridPos ?? new Vector2I(0, 0);
 			_platformGenerator.GeneratePlatforms(this, roomGridPos);
 
-			// Настраиваемся двери и спавны
+			// Настраиваем двери и спавны
 			_doorController.SetupDoorsAndSpawns(this);
 
 			// Настраиваем KillZone
@@ -54,6 +54,7 @@ public partial class Room : Node2D
 
 			// Включаем обратно только те двери, которые должны работать
 			_doorController.EnableDoorsAfterDelay();
+
 		}
 		catch (System.Exception ex)
 		{
