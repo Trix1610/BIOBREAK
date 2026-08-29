@@ -1,8 +1,0 @@
-[gd_scene format=3 uid="uid://dsxi2ea21xcnh"]
-
-[ext_resource type="Script" uid="uid://csk0lttqv8rwl" path="res://scripts/player/Weapon.cs" id="1_14kce"]
-
-[node name="Weapon" type="Node2D" unique_id=28855092]
-script = ExtResource("1_14kce")
-
-[node name="Sprite2D" type="Sprite2D" parent="." unique_id=1643970786]

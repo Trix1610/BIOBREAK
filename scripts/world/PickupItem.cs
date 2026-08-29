@@ -4,6 +4,7 @@ public partial class PickupItem : Area2D
 {
 	// Ссылка на конкретный файл ресурса (.tres), назначается в Инспекторе
 	[Export] public OrganData ItemData { get; set; }
+	[Export] public WeaponData WeaponData { get; set; }
 
 	public override void _Ready()
 	{
@@ -24,9 +25,17 @@ public partial class PickupItem : Area2D
 				// Удаляем предмет с карты
 				QueueFree(); 
 			}
+			else if (WeaponData != null)
+			{
+				// Экипируем оружие
+				player.EquipWeapon(WeaponData);
+				
+				// Удаляем предмет с карты
+				QueueFree();
+			}
 			else
 			{
-				GD.PrintErr($"ОШИБКА: У объекта {Name} в Инспекторе не назначен файл ItemData (.tres)!");
+				GD.PrintErr($"ОШИБКА: У объекта {Name} в Инспекторе не назначен файл ItemData или WeaponData (.tres)!");
 			}
 		}
 	}

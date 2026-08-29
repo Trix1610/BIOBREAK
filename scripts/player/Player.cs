@@ -6,7 +6,7 @@ public partial class Player : CharacterBody2D
 	[Export] public float JumpVelocity { get; set; } = -600.0f;
 	
 	[Export] public int MaxHealth { get; set; } = 8;
-	[Export] public int CurrentHealth { get; set; } = 6;
+	public int CurrentHealth { get; private set; } = 7;
 	
 	[Export] private NodePath healthUIPath;
 	private HealthUI _healthUI;
@@ -23,7 +23,7 @@ public partial class Player : CharacterBody2D
 	private int _jumpsLeft = 0;
 	public OrganManager OrganManager { get; private set; }
 
-	private Weapon _currentWeapon;
+	private WeaponBase _currentWeapon;
 	[Export] public PackedScene WeaponSceneTemplate { get; set; }
 	[Export] public WeaponData StartingWeaponData { get; set; }
 
@@ -31,7 +31,6 @@ public partial class Player : CharacterBody2D
 	{
 		AddToGroup("Player");
 
-		CurrentHealth = 6; 
 		GD.Print($"[Player _Ready] Игрок создан. MaxHealth: {MaxHealth}, CurrentHealth: {CurrentHealth}");
 
 		OrganManager = GetNodeOrNull<OrganManager>("OrganManager");
@@ -59,25 +58,54 @@ public partial class Player : CharacterBody2D
 
 	private void EquipStartingWeapon()
 	{
-		if (WeaponSceneTemplate == null)
-		{
-			WeaponSceneTemplate = GD.Load<PackedScene>("res://scenes/player/Weapon.tscn");
-		}
 		if (StartingWeaponData == null)
 		{
 			StartingWeaponData = GD.Load<WeaponData>("res://resources/weapons/pistol.tres");
 		}
 
-		if (WeaponSceneTemplate != null && StartingWeaponData != null)
+		if (StartingWeaponData != null)
 		{
-			Node weaponNode = WeaponSceneTemplate.Instantiate();
-			if (weaponNode is Weapon weapon)
+			WeaponBase weapon = CreateWeaponByClass(StartingWeaponData.WeaponClass ?? "SingleShotWeapon");
+			
+			if (weapon != null)
 			{
+				weapon.Data = StartingWeaponData;
 				_currentWeapon = weapon;
-				_currentWeapon.Data = StartingWeaponData;
 				AddChild(_currentWeapon);
-				_currentWeapon.Position = new Vector2(15, 0); 
+				_currentWeapon.Position = new Vector2(15, 0);
 			}
+		}
+	}
+
+	private WeaponBase CreateWeaponByClass(string weaponClass)
+	{
+		return weaponClass switch
+		{
+			"AutomaticWeapon" => new AutomaticWeapon(),
+			"ShotgunWeapon" => new ShotgunWeapon(),
+			"LaserWeapon" => new LaserWeapon(),
+			"RailgunWeapon" => new RailgunWeapon(),
+			"SonicWeapon" => new SonicWeapon(),
+			"ExplosiveWeapon" => new ExplosiveWeapon(),
+			_ => new SingleShotWeapon()
+		};
+	}
+
+	public void EquipWeapon(WeaponData newWeaponData)
+	{
+		if (_currentWeapon != null)
+		{
+			_currentWeapon.QueueFree();
+		}
+
+		WeaponBase weapon = CreateWeaponByClass(newWeaponData.WeaponClass ?? "SingleShotWeapon");
+		
+		if (weapon != null)
+		{
+			weapon.Data = newWeaponData;
+			_currentWeapon = weapon;
+			AddChild(_currentWeapon);
+			_currentWeapon.Position = new Vector2(15, 0);
 		}
 	}
 
@@ -149,6 +177,12 @@ public partial class Player : CharacterBody2D
 		Velocity = velocity;
 		MoveAndSlide();
 
+		// Автоматическая стрельба при зажатой кнопке
+		if (Input.IsActionPressed("ui_accept") && _currentWeapon is AutomaticWeapon autoWeapon)
+		{
+			autoWeapon.ContinueFiring(GlobalPosition);
+		}
+
 		CheckEnemyCollisionForKnockback();
 	}
 
@@ -183,6 +217,15 @@ public partial class Player : CharacterBody2D
 		if ((isMouseClick || isFKey) && _currentWeapon != null)
 		{
 			_currentWeapon.Shoot(GlobalPosition, GetGlobalMousePosition());
+		}
+
+		// Отпускание кнопки для автоматического оружия
+		if (@event is InputEventMouseButton mbReleased && !mbReleased.Pressed && mbReleased.ButtonIndex == MouseButton.Left)
+		{
+			if (_currentWeapon is AutomaticWeapon autoWeapon)
+			{
+				autoWeapon.StopFiring();
+			}
 		}
 	}
 
