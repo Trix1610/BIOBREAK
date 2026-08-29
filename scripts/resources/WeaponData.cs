@@ -4,8 +4,7 @@ using Godot;
 public partial class WeaponData : Resource
 {
 	[Export] public string WeaponName { get; set; } = "Пистолет";
-	[Export] public string WeaponClass { get; set; } = "SingleShotWeapon";
-	// Возможные значения: SingleShotWeapon, AutomaticWeapon, ShotgunWeapon, LaserWeapon, RailgunWeapon, SonicWeapon, ExplosiveWeapon
+	[Export] public WeaponType WeaponType { get; set; } = WeaponType.SingleShotWeapon;
 	
 	[Export] public PackedScene BulletScene { get; set; }
 	[Export] public Texture2D WeaponSprite { get; set; }

@@ -1,0 +1,18 @@
+[gd_resource type="Resource" script_class="WeaponData" load_steps=2 format=3 uid="uid://grenade_launcher_weapon"]
+
+[ext_resource type="Script" path="res://scripts/resources/WeaponData.cs" id="1_WeaponData"]
+
+[resource]
+script = ExtResource("1_WeaponData")
+WeaponName = "Гранатомет"
+WeaponType = 6
+FireRate = 1.0
+BulletSpeed = 400.0
+Damage = 50
+PelletCount = 1
+SpreadAngle = 0.0
+RandomSpread = 0.0
+Range = 800.0
+AreaRadius = 200.0
+CanPenetrate = false
+ExplosionDelay = 0.5

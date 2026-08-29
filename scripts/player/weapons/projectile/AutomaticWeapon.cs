@@ -28,10 +28,11 @@ public partial class AutomaticWeapon : ProjectileWeapon
 		_isFiring = false;
 	}
 
-	public void ContinueFiring(Vector2 spawnPosition)
+	public void ContinueFiring(Vector2 spawnPosition, Vector2 targetPosition)
 	{
 		if (_isFiring && IsFullAuto && _fireCooldown <= 0)
 		{
+			_lastTargetPosition = targetPosition;
 			SpawnBullet(spawnPosition, _lastTargetPosition, 0f);
 		}
 	}

@@ -60,12 +60,12 @@ public partial class Player : CharacterBody2D
 	{
 		if (StartingWeaponData == null)
 		{
-			StartingWeaponData = GD.Load<WeaponData>("res://resources/weapons/pistol.tres");
+			StartingWeaponData = GD.Load<WeaponData>("res://resources/weapons/projectile/machingun.tres");
 		}
 
 		if (StartingWeaponData != null)
 		{
-			WeaponBase weapon = CreateWeaponByClass(StartingWeaponData.WeaponClass ?? "SingleShotWeapon");
+			WeaponBase weapon = CreateWeaponByType(StartingWeaponData.WeaponType);
 			
 			if (weapon != null)
 			{
@@ -77,16 +77,16 @@ public partial class Player : CharacterBody2D
 		}
 	}
 
-	private WeaponBase CreateWeaponByClass(string weaponClass)
+	private WeaponBase CreateWeaponByType(WeaponType weaponType)
 	{
-		return weaponClass switch
+		return weaponType switch
 		{
-			"AutomaticWeapon" => new AutomaticWeapon(),
-			"ShotgunWeapon" => new ShotgunWeapon(),
-			"LaserWeapon" => new LaserWeapon(),
-			"RailgunWeapon" => new RailgunWeapon(),
-			"SonicWeapon" => new SonicWeapon(),
-			"ExplosiveWeapon" => new ExplosiveWeapon(),
+			WeaponType.AutomaticWeapon => new AutomaticWeapon(),
+			WeaponType.ShotgunWeapon => new ShotgunWeapon(),
+			WeaponType.LaserWeapon => new LaserWeapon(),
+			WeaponType.RailgunWeapon => new RailgunWeapon(),
+			WeaponType.SonicWeapon => new SonicWeapon(),
+			WeaponType.ExplosiveWeapon => new ExplosiveWeapon(),
 			_ => new SingleShotWeapon()
 		};
 	}
@@ -98,7 +98,7 @@ public partial class Player : CharacterBody2D
 			_currentWeapon.QueueFree();
 		}
 
-		WeaponBase weapon = CreateWeaponByClass(newWeaponData.WeaponClass ?? "SingleShotWeapon");
+		WeaponBase weapon = CreateWeaponByType(newWeaponData.WeaponType);
 		
 		if (weapon != null)
 		{
@@ -177,10 +177,10 @@ public partial class Player : CharacterBody2D
 		Velocity = velocity;
 		MoveAndSlide();
 
-		// Автоматическая стрельба при зажатой кнопке
-		if (Input.IsActionPressed("ui_accept") && _currentWeapon is AutomaticWeapon autoWeapon)
+		// Автоматическая стрельба при зажатой кнопке мыши
+		if (Input.IsMouseButtonPressed(MouseButton.Left) && _currentWeapon is AutomaticWeapon autoWeapon)
 		{
-			autoWeapon.ContinueFiring(GlobalPosition);
+			autoWeapon.ContinueFiring(GlobalPosition, GetGlobalMousePosition());
 		}
 
 		CheckEnemyCollisionForKnockback();
