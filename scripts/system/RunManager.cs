@@ -18,6 +18,11 @@ public partial class RunManager : Node
 	private PackedScene _gameOverScene = GD.Load<PackedScene>("res://scenes/ui/GameOverScreen.tscn");
 	private Control _gameOverInstance;
 
+	// Ссылка на меню паузы и его префаб
+	private PackedScene _pauseMenuScene = GD.Load<PackedScene>("res://scenes/ui/PauseMenu.tscn");
+	private Control _pauseMenuInstance;
+	private bool _isPaused = false;
+
 	// Префайбы комнат
 	private PackedScene _mainScene = GD.Load<PackedScene>("res://scenes/world/Main.tscn");
 	private PackedScene _lvl2Scene = GD.Load<PackedScene>("res://scenes/world/Level2.tscn");
@@ -34,10 +39,11 @@ public partial class RunManager : Node
 		}
 		Instance = this;
 
+		// ЗАСТАВЛЯЕМ RunManager РАБОТАТЬ ДАЖЕ ВО ВРЕМЯ ПАУЗЫ:
+		ProcessMode = ProcessModeEnum.Always;
+
 		// Автоматически создаем слой затемнения поверх всех окон при запуске
 		SetupFadeLayer();
-		
-		// Автоматический вызов StartNewRun() здесь убран, чтобы игра ждала нажатия кнопки «Старт» в меню!
 	}
 
 	private void SetupFadeLayer()
@@ -58,13 +64,79 @@ public partial class RunManager : Node
 		canvasLayer.AddChild(_fadeRect);
 	}
 
-	// МЕТОД ЗАПУСКА НОВОГО ЗАБЕГА (из главного меню или рестарта)
+	public override void _UnhandledInput(InputEvent @event)
+	{
+		// Проверяем Esc только если забег активен
+		if (@event.IsActionPressed("ui_cancel") && IsRunActive)
+		{
+			// Дополнительная защита: если мы случайно оказались в сцене главного меню, не открываем паузу
+			string currentScenePath = GetTree().CurrentScene?.SceneFilePath ?? "";
+			if (currentScenePath.Contains("MainMenu"))
+			{
+				return;
+			}
+
+			TogglePause();
+		}
+	}
+	
+	// Вызывается при выходе в главное меню или завершении сессии
+	public void EndRun()
+	{
+		IsRunActive = false;
+		_isPaused = false;
+		GetTree().Paused = false;
+		ClearPauseMenu();
+		ClearGameOverScreen();
+	}
+
+	public void TogglePause()
+	{
+		// Инвертируем текущий статус паузы
+		_isPaused = !_isPaused;
+
+		if (_isPaused)
+		{
+			// Если ставим на паузу — создаем меню, если его еще не было
+			if (_pauseMenuInstance == null && _pauseMenuScene != null)
+			{
+				_pauseMenuInstance = _pauseMenuScene.Instantiate<Control>();
+				
+				if (_fadeRect != null && _fadeRect.GetParent() is CanvasLayer canvasLayer)
+				{
+					canvasLayer.AddChild(_pauseMenuInstance);
+				}
+			}
+
+			if (_pauseMenuInstance != null)
+			{
+				_pauseMenuInstance.Visible = true;
+			}
+
+			GetTree().Paused = true;
+		}
+		else
+		{
+			// Если снимаем с паузы — просто скрываем меню паузы
+			if (_pauseMenuInstance != null)
+			{
+				_pauseMenuInstance.Visible = false;
+			}
+
+			GetTree().Paused = false;
+		}
+	}
+
+	// МЕТОД ЗАПУСКА НОВОГО ЗАБЕГА
 	public async void StartNewRun(int runSeed = 0)
 	{
-		// Очищаем экран смерти, если он остался с прошлого раза
+		// На всякий случай снимаем паузу и очищаем старые окна при новом забеге
+		GetTree().Paused = false;
+		_isPaused = false;
+		ClearPauseMenu();
 		ClearGameOverScreen();
 
-		// Мгновенно закрываем экран черным полотном, скрывая любые кадры инициализации
+		// Мгновенно закрываем экран черным полотном, скрывая кадры инициализации
 		if (_fadeRect != null)
 		{
 			_fadeRect.Modulate = new Color(1, 1, 1, 1);
@@ -179,10 +251,14 @@ public partial class RunManager : Node
 		}
 	}
 
-	// --- МЕТОДЫ ДЛЯ РАБОТЫ С GAME OVER ---
+	// --- МЕТОДЫ ДЛЯ РАБОТЫ С GAME OVER И ПАУЗОЙ ---
 
 	public void ShowGameOver()
 	{
+		// Выключаем меню паузы, если оно горело
+		_isPaused = false;
+		ClearPauseMenu();
+
 		if (_gameOverInstance == null && _gameOverScene != null)
 		{
 			_gameOverInstance = _gameOverScene.Instantiate<Control>();
@@ -212,9 +288,18 @@ public partial class RunManager : Node
 		}
 	}
 
+	private void ClearPauseMenu()
+	{
+		if (_pauseMenuInstance != null)
+		{
+			_pauseMenuInstance.Visible = false;
+			_pauseMenuInstance.QueueFree();
+			_pauseMenuInstance = null;
+		}
+	}
+
 	public void RestartGame()
 	{
-		GetTree().Paused = false; 
 		StartNewRun();            
 	}
 }
