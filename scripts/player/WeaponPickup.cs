@@ -75,7 +75,16 @@ public partial class WeaponPickup : Area2D
 	{
 		if (WeaponDataToDrop != null)
 		{
-			player.EquipWeapon(WeaponDataToDrop);
+			// Теперь оружие обновляется глобально через RunManager
+			if (RunManager.Instance != null)
+			{
+				RunManager.Instance.UpdatePlayerWeapon(WeaponDataToDrop);
+			}
+			else
+			{
+				player.EquipWeapon(WeaponDataToDrop);
+			}
+
 			GD.Print($"[Pickup] Игрок сменил оружие на: {WeaponDataToDrop.WeaponName}");
 		}
 		

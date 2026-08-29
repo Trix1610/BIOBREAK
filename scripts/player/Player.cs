@@ -58,7 +58,13 @@ public partial class Player : CharacterBody2D
 
 	private void EquipStartingWeapon()
 	{
-		if (StartingWeaponData == null)
+		// 1. Проверяем, есть ли сохраненное оружие в глобальном менеджере забега
+		if (RunManager.Instance != null && RunManager.Instance.CurrentWeaponData != null)
+		{
+			StartingWeaponData = RunManager.Instance.CurrentWeaponData;
+		}
+		// 2. Иначе берем то, что настроено в инспекторе, либо дефолтный пистолет
+		else if (StartingWeaponData == null)
 		{
 			StartingWeaponData = GD.Load<WeaponData>("res://resources/weapons/projectile/pistol.tres");
 		}
@@ -151,13 +157,14 @@ public partial class Player : CharacterBody2D
 			_jumpsLeft = 1 + OrganManager.GetTotalExtraJumps();
 		}
 
-		if (Input.IsActionJustPressed("ui_accept") && _jumpsLeft > 0)
+		// Используем кастомное действие "jump" вместо ui_accept
+		if (Input.IsActionJustPressed("jump") && _jumpsLeft > 0)
 		{
 			velocity.Y = JumpVelocity;
 			_jumpsLeft--;
 		}
 
-		if (Input.IsActionJustReleased("ui_accept") && velocity.Y < 0)
+		if (Input.IsActionJustReleased("jump") && velocity.Y < 0)
 		{
 			velocity.Y *= 0.5f;
 		}

@@ -3,10 +3,39 @@ using System.Collections.Generic;
 
 public partial class Minimap : Control
 {
+	// Объявляем Instance ровно один раз
+	public static Minimap Instance { get; private set; }
+
 	[Export] public Vector2 CellSize = new Vector2(24, 24);
 	[Export] public Vector2 CellMargin = new Vector2(8, 8);
 	[Export] public Color LineColor = new Color(0.8f, 0.8f, 0.8f, 0.6f);
 	[Export] public float LineWidth = 3.0f;
+
+	public override void _Ready()
+	{
+		if (Instance == null)
+		{
+			Instance = this;
+		}
+		else
+		{
+			QueueFree();
+			return;
+		}
+	}
+
+	public override void _ExitTree()
+	{
+		if (Instance == this)
+		{
+			Instance = null;
+		}
+	}
+
+	public void SetVisible(bool isVisible)
+	{
+		Visible = isVisible;
+	}
 
 	public override void _Process(double delta)
 	{

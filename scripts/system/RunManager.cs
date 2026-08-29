@@ -11,6 +11,9 @@ public partial class RunManager : Node
 	public RoomNode CurrentRoom { get; set; }
 	public Dictionary<Vector2I, RoomNode> RoomGrid { get; private set; } = new();
 
+	// Сохранение текущего оружия игрока между комнатами
+	public WeaponData CurrentWeaponData { get; set; }
+
 	// Ссылка на черный экран для фейда
 	private ColorRect _fadeRect;
 
@@ -30,6 +33,9 @@ public partial class RunManager : Node
 	private PackedScene _lvl4Scene = GD.Load<PackedScene>("res://scenes/world/Level4.tscn");
 	private PackedScene _lvl5Scene = GD.Load<PackedScene>("res://scenes/world/Level5.tscn");
 
+	// Путь к файлу настроек
+	private const string SettingsFilePath = "user://settings.cfg";
+
 	public override void _Ready()
 	{
 		if (Instance != null && Instance != this)
@@ -39,11 +45,54 @@ public partial class RunManager : Node
 		}
 		Instance = this;
 
-		// ЗАСТАВЛЯЕМ RunManager РАБОТАТЬ ДАЖЕ ВО ВРЕМЯ ПАУЗЫ:
+		// Заставляем RunManager работать даже во время паузы для обработки Esc
 		ProcessMode = ProcessModeEnum.Always;
+
+		// Применяем сохраненные настройки экрана (полноэкранный режим / разрешение) при запуске
+		ApplySavedSettings();
 
 		// Автоматически создаем слой затемнения поверх всех окон при запуске
 		SetupFadeLayer();
+	}
+
+	// --- МЕТОДЫ ДЛЯ РАБОТЫ С НАСТРОЙКАМИ ЭКРАНА ---
+
+	private void ApplySavedSettings()
+	{
+		ConfigFile config = new ConfigFile();
+		Error err = config.Load(SettingsFilePath);
+		
+		if (err == Error.Ok)
+		{
+			// Читаем сохраненный Fullscreen (по умолчанию false - оконный режим)
+			bool isFullscreen = (bool.TryParse(config.GetValue("Video", "Fullscreen", false).ToString(), out var fs)) ? fs : false;
+
+			if (isFullscreen)
+			{
+				DisplayServer.WindowSetMode(DisplayServer.WindowMode.Fullscreen);
+				GD.Print("[RunManager] Применен сохраненный режим: Fullscreen");
+			}
+			else
+			{
+				DisplayServer.WindowSetMode(DisplayServer.WindowMode.Windowed);
+				GD.Print("[RunManager] Применен сохраненный режим: Windowed");
+			}
+		}
+		else
+		{
+			// Если файла настроек еще нет, запускаем в обычном оконном режиме
+			DisplayServer.WindowSetMode(DisplayServer.WindowMode.Windowed);
+		}
+	}
+
+	// Метод для сохранения настроек (можешь вызывать из SettingsMenu)
+	public static void SaveVideoSettings(bool isFullscreen)
+	{
+		ConfigFile config = new ConfigFile();
+		config.Load(SettingsFilePath); // Загружаем существующие, чтобы не затереть звук, если он там есть
+		
+		config.SetValue("Video", "Fullscreen", isFullscreen);
+		config.Save(SettingsFilePath);
 	}
 
 	private void SetupFadeLayer()
@@ -88,6 +137,17 @@ public partial class RunManager : Node
 		GetTree().Paused = false;
 		ClearPauseMenu();
 		ClearGameOverScreen();
+
+		// Скрываем UI при выходе в меню
+		if (HealthUI.Instance != null)
+		{
+			HealthUI.Instance.Visible = false;
+		}
+
+		if (Minimap.Instance != null)
+		{
+			Minimap.Instance.Visible = false;
+		}
 	}
 
 	public void TogglePause()
@@ -136,6 +196,20 @@ public partial class RunManager : Node
 		ClearPauseMenu();
 		ClearGameOverScreen();
 
+		// Сбрасываем оружие на стартовый пистолет при начале нового забега
+		CurrentWeaponData = GD.Load<WeaponData>("res://resources/weapons/projectile/pistol.tres");
+
+		// Возвращаем видимость UI при начале нового забега
+		if (HealthUI.Instance != null)
+		{
+			HealthUI.Instance.Visible = true;
+		}
+
+		if (Minimap.Instance != null)
+		{
+			Minimap.Instance.Visible = true;
+		}
+
 		// Мгновенно закрываем экран черным полотном, скрывая кадры инициализации
 		if (_fadeRect != null)
 		{
@@ -165,6 +239,19 @@ public partial class RunManager : Node
 				Tween tweenOut = CreateTween();
 				tweenOut.TweenProperty(_fadeRect, "modulate:a", 0.0f, 0.3f);
 			}
+		}
+	}
+
+	// Метод для обновления и сохранения текущего оружия игрока
+	public void UpdatePlayerWeapon(WeaponData newWeaponData)
+	{
+		CurrentWeaponData = newWeaponData;
+
+		// Если игрок уже на сцене, сразу выдаем ему новое оружие
+		var player = GetTree()?.GetFirstNodeInGroup("Player") as Player;
+		if (player != null)
+		{
+			player.EquipWeapon(newWeaponData);
 		}
 	}
 
@@ -300,6 +387,6 @@ public partial class RunManager : Node
 
 	public void RestartGame()
 	{
-		StartNewRun();            
+		StartNewRun();         
 	}
 }

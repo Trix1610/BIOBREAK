@@ -31,6 +31,19 @@ public partial class HealthUI : CanvasLayer
 			GD.PrintErr("[HealthUI] ОШИБКА: Не найден узел HBoxContainer!");
 		}
 	}
+	
+	public override void _ExitTree()
+	{
+		if (Instance == this)
+		{
+			Instance = null;
+		}
+	}
+
+	public void SetVisible(bool isVisible)
+	{
+		Visible = isVisible;
+	}
 
 	public void SetupForPlayer(Player newPlayer)
 	{
