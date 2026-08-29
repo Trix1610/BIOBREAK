@@ -48,7 +48,7 @@ texture = ExtResource("2_431da")
 stretch_mode = 1
 
 [node name="WallLeft" type="CollisionShape2D" parent="Environment" unique_id=987836364]
-position = Vector2(-48, 539)
+position = Vector2(-17, 539)
 shape = SubResource("RectangleShape2D_wall")
 
 [node name="TextureRect" type="TextureRect" parent="Environment/WallLeft" unique_id=326359202]
@@ -75,7 +75,7 @@ stretch_mode = 1
 position = Vector2(8, 982)
 
 [node name="CollisionShape2D" type="CollisionShape2D" parent="LeftDoor" unique_id=1123742714]
-position = Vector2(-24, -449)
+position = Vector2(8, -444)
 shape = SubResource("RectangleShape2D_wall")
 
 [node name="RightDoor" type="Area2D" parent="." unique_id=2080110953]
