@@ -43,6 +43,16 @@ public partial class Player : CharacterBody2D
 	{
 		AddToGroup("Player");
 
+		// Синхронизируем здоровье с RunManager, если он активен
+		if (RunManager.Instance != null && RunManager.Instance.IsRunActive)
+		{
+			CurrentHealth = RunManager.Instance.CurrentPlayerHealth;
+		}
+		else
+		{
+			CurrentHealth = MaxHealth;
+		}
+
 		GD.Print($"[Player _Ready] Игрок создан. MaxHealth: {MaxHealth}, CurrentHealth: {CurrentHealth}");
 
 		OrganManager = GetNodeOrNull<OrganManager>("OrganManager");
@@ -254,6 +264,12 @@ public partial class Player : CharacterBody2D
 
 		CurrentHealth -= damage;
 		CurrentHealth = Mathf.Clamp(CurrentHealth, 0, MaxHealth);
+
+		// Сразу обновляем здоровье в глобальном менеджере забега
+		if (RunManager.Instance != null)
+		{
+			RunManager.Instance.CurrentPlayerHealth = CurrentHealth;
+		}
 
 		if (HealthUI.Instance != null)
 		{
