@@ -5,6 +5,8 @@ public partial class PlatformGenerator : Node
 {
 	[Export] public int LimitRight { get; set; } = 1920;
 
+	public RoomThemeData CurrentThemeData { get; set; }
+
 	public void GeneratePlatforms(Node2D parent, Vector2I roomGridPos)
 	{
 		if (parent.HasNode("AutoPlatforms")) return;
@@ -74,15 +76,18 @@ public partial class PlatformGenerator : Node
 				collision.Shape = rectShape;
 				staticBody.AddChild(collision);
 
+				Color platformColor = CurrentThemeData?.PlatformColor ?? new Color(0.18f, 0.2f, 0.28f);
+				Color borderColor = CurrentThemeData?.BorderColor ?? new Color(0.4f, 0.6f, 0.9f);
+
 				var colorRect = new ColorRect();
 				colorRect.Size = size;
 				colorRect.Position = -size / 2f;
-				colorRect.Color = new Color(0.18f, 0.2f, 0.28f);
+				colorRect.Color = platformColor;
 
 				var borderRect = new ColorRect();
 				borderRect.Size = new Vector2(size.X, 4);
 				borderRect.Position = new Vector2(-size.X / 2f, -size.Y / 2f);
-				borderRect.Color = new Color(0.4f, 0.6f, 0.9f);
+				borderRect.Color = borderColor;
 
 				staticBody.AddChild(colorRect);
 				staticBody.AddChild(borderRect);

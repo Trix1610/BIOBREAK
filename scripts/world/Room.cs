@@ -23,6 +23,9 @@ public partial class Room : Node2D
 			// Создаем компоненты
 			InitializeComponents();
 
+			// Передаем данные темы оформления в генератор платформ
+			_platformGenerator.CurrentThemeData = RunManager.Instance?.CurrentBioZone?.ThemeData;
+
 			// Генерируем платформы
 			Vector2I roomGridPos = RunManager.Instance?.CurrentRoom?.GridPos ?? new Vector2I(0, 0);
 			_platformGenerator.GeneratePlatforms(this, roomGridPos);
@@ -85,6 +88,14 @@ public partial class Room : Node2D
 		_killZone.Name = "RoomKillZone";
 		AddChild(_killZone);
 
+		// Создаем ZoneUI если его еще нет
+		if (GetTree().GetFirstNodeInGroup("ZoneUI") == null)
+		{
+			var zoneUI = new ZoneUI();
+			zoneUI.Name = "ZoneUI";
+			GetTree().Root.AddChild(zoneUI);
+		}
+
 		// Подписываемся на события
 		_enemySpawner.OnAllEnemiesDefeated += OnAllEnemiesDefeated;
 		_doorController.OnRoomTransitionRequested += OnRoomTransitionRequested;
@@ -97,6 +108,13 @@ public partial class Room : Node2D
 		{
 			player = _playerScene.Instantiate<Node2D>();
 			AddChild(player);
+
+			// Устанавливаем сохраненное здоровье из RunManager
+			var playerScript = player as Player;
+			if (playerScript != null && RunManager.Instance != null)
+			{
+				playerScript.SetHealth(RunManager.Instance.CurrentPlayerHealth);
+			}
 		}
 
 		string targetSpawnName = GameManager.Instance?.TargetSpawnPoint;
@@ -155,6 +173,14 @@ public partial class Room : Node2D
 	{
 		GD.Print("[Room] Все враги повержены! Открываем двери.");
 		_doorController.UnlockDoors();
+
+		// Проверяем зачистку всей био-зоны
+		var currentZone = RunManager.Instance?.CurrentBioZone;
+		if (currentZone != null && currentZone.IsCleared())
+		{
+			GD.Print("[Room] Био-зона зачищена! Переход к следующей зоне.");
+			RunManager.Instance.TransitionToNextZone();
+		}
 	}
 
 	private void OnRoomTransitionRequested()

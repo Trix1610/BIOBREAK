@@ -5,8 +5,20 @@ public partial class Player : CharacterBody2D
 	[Export] public float BaseSpeed { get; set; } = 200.0f;
 	[Export] public float JumpVelocity { get; set; } = -600.0f;
 	
-	[Export] public int MaxHealth { get; set; } = 6;
-	public int CurrentHealth { get; private set; } = 6;
+	[Export] public int MaxHealth { get; set; } = 8;
+	public int CurrentHealth { get; private set; } = 8;
+
+	public void SetHealth(int health)
+	{
+		CurrentHealth = health;
+		CurrentHealth = Mathf.Clamp(CurrentHealth, 0, MaxHealth);
+
+		// Синхронизируем здоровье с RunManager
+		if (RunManager.Instance != null)
+		{
+			RunManager.Instance.CurrentPlayerHealth = CurrentHealth;
+		}
+	}
 	
 	[Export] private NodePath healthUIPath;
 	private HealthUI _healthUI;

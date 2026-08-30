@@ -40,7 +40,7 @@ public partial class HealthUI : CanvasLayer
 		}
 	}
 
-	public void SetVisible(bool isVisible)
+	public new void SetVisible(bool isVisible)
 	{
 		Visible = isVisible;
 	}

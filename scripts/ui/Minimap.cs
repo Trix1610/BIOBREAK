@@ -32,7 +32,7 @@ public partial class Minimap : Control
 		}
 	}
 
-	public void SetVisible(bool isVisible)
+	public new void SetVisible(bool isVisible)
 	{
 		Visible = isVisible;
 	}

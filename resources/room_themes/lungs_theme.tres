@@ -1,0 +1,9 @@
+[gd_resource type="Resource" script_class="RoomThemeData" format=3 uid="uid://jshe8vkv15j"]
+
+[ext_resource type="Script" uid="uid://b5a6wxkp12dbs" path="res://scripts/resources/RoomThemeData.cs" id="1_RoomThemeData"]
+
+[resource]
+script = ExtResource("1_RoomThemeData")
+ThemeName = "Lungs"
+PlatformColor = Color(0.25, 0.35, 0.45, 1)
+BorderColor = Color(0.6, 0.8, 0.95, 1)
