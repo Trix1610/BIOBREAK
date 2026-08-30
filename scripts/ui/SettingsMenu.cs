@@ -3,7 +3,11 @@ using System.Collections.Generic;
 
 public partial class SettingsMenu : Control
 {
+	[Export(PropertyHint.File, "*.tscn")]
+	private string ControlsMenuScenePath { get; set; } = "res://scenes/ui/ControlsMenu.tscn";
+	
 	private Button _backButton;
+	private Button _controlsButton;
 	private HSlider _masterVolumeSlider;
 	private CheckButton _fullscreenToggle;
 	private CheckButton _vsyncToggle;
@@ -12,16 +16,15 @@ public partial class SettingsMenu : Control
 	private Control[] _settingsElements;
 	private int _currentIndex = 0;
 
-	// Список разрешений, включая стандартные и Ultrawide мониторы
 	private readonly List<Vector2I> _resolutions = new()
 	{
 		new Vector2I(1280, 720),
 		new Vector2I(1366, 768),
 		new Vector2I(1600, 900),
 		new Vector2I(1920, 1080),
-		new Vector2I(2560, 1080), // Ultrawide 21:9
-		new Vector2I(2560, 1440), // 2K QHD
-		new Vector2I(3440, 1440)  // Ultrawide 21:9 2K
+		new Vector2I(2560, 1080),
+		new Vector2I(2560, 1440),
+		new Vector2I(3440, 1440)
 	};
 
 	public override void _Ready()
@@ -29,6 +32,7 @@ public partial class SettingsMenu : Control
 		ProcessMode = ProcessModeEnum.Always;
 
 		_backButton = GetNodeOrNull<Button>("CenterContainer/VBoxContainer/BackButton");
+		_controlsButton = GetNodeOrNull<Button>("CenterContainer/VBoxContainer/ControlsButton");
 		_masterVolumeSlider = GetNodeOrNull<HSlider>("CenterContainer/VBoxContainer/MasterVolumeSlider");
 		_fullscreenToggle = GetNodeOrNull<CheckButton>("CenterContainer/VBoxContainer/FullscreenToggle");
 		_vsyncToggle = GetNodeOrNull<CheckButton>("CenterContainer/VBoxContainer/VsyncToggle");
@@ -38,6 +42,12 @@ public partial class SettingsMenu : Control
 		{
 			_backButton.ProcessMode = ProcessModeEnum.Always;
 			_backButton.Pressed += OnBackPressed;
+		}
+
+		if (_controlsButton != null)
+		{
+			_controlsButton.ProcessMode = ProcessModeEnum.Always;
+			_controlsButton.Pressed += OnControlsPressed;
 		}
 
 		if (_masterVolumeSlider != null)
@@ -69,8 +79,7 @@ public partial class SettingsMenu : Control
 			_resolutionOption.ItemSelected += OnResolutionSelected;
 		}
 
-		// Порядок элементов: Разрешение теперь первое, затем Звук, Полноэкранный режим, VSync и Кнопка «Назад»
-		_settingsElements = new Control[] { _resolutionOption, _masterVolumeSlider, _fullscreenToggle, _vsyncToggle, _backButton };
+		_settingsElements = new Control[] { _resolutionOption, _masterVolumeSlider, _fullscreenToggle, _vsyncToggle, _controlsButton, _backButton };
 	}
 
 	private void SetupResolutions()
@@ -154,7 +163,6 @@ public partial class SettingsMenu : Control
 			DisplayServer.WindowSetMode(DisplayServer.WindowMode.Windowed);
 		}
 
-		// Сохраняем выбор в файл через RunManager
 		RunManager.SaveVideoSettings(isFullscreen);
 	}
 
@@ -184,6 +192,34 @@ public partial class SettingsMenu : Control
 			}
 			
 			GD.Print($"[SettingsMenu] Установлено разрешение: {selectedRes.X}x{selectedRes.Y}");
+		}
+	}
+
+	private void OnControlsPressed()
+	{
+		GD.Print("[SettingsMenu Debug] Нажата кнопка 'ControlsButton'.");
+		
+		if (!string.IsNullOrEmpty(ControlsMenuScenePath))
+		{
+			var controlsScene = GD.Load<PackedScene>(ControlsMenuScenePath);
+			if (controlsScene != null)
+			{
+				var controlsInstance = controlsScene.Instantiate<Control>();
+				
+				// Добавляем сцену управления в корень или в общего родителя (MainMenu)
+				GetParent().AddChild(controlsInstance);
+				
+				GD.Print("[SettingsMenu Debug] Сцена ControlsMenu успешно создана и добавлена, скрываем SettingsPanel.");
+				Hide(); // Скрываем текущие настройки
+			}
+			else
+			{
+				GD.PrintErr($"[SettingsMenu Error] Не удалось загрузить сцену по пути: {ControlsMenuScenePath}");
+			}
+		}
+		else
+		{
+			GD.PrintErr("[SettingsMenu Error] Путь к сцене ControlsMenuScenePath пуст!");
 		}
 	}
 

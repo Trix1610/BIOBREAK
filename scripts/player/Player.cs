@@ -13,7 +13,6 @@ public partial class Player : CharacterBody2D
 		CurrentHealth = health;
 		CurrentHealth = Mathf.Clamp(CurrentHealth, 0, MaxHealth);
 
-		// Синхронизируем здоровье с RunManager
 		if (RunManager.Instance != null)
 		{
 			RunManager.Instance.CurrentPlayerHealth = CurrentHealth;
@@ -39,11 +38,22 @@ public partial class Player : CharacterBody2D
 	[Export] public PackedScene WeaponSceneTemplate { get; set; }
 	[Export] public WeaponData StartingWeaponData { get; set; }
 
+	private AnimatedSprite2D _animatedSprite;
+	
+	// ===== ДОБАВЛЕНО: запоминаем последнее направление =====
+	private float _lastDirection = 1.0f; // 1 - вправо, -1 - влево
+
 	public override void _Ready()
 	{
 		AddToGroup("Player");
 
-		// Синхронизируем здоровье с RunManager, если он активен
+		_animatedSprite = GetNode<AnimatedSprite2D>("AnimatedSprite2D");
+		
+		if (_animatedSprite == null)
+		{
+			GD.PrintErr("[Player] AnimatedSprite2D не найден!");
+		}
+
 		if (RunManager.Instance != null && RunManager.Instance.IsRunActive)
 		{
 			CurrentHealth = RunManager.Instance.CurrentPlayerHealth;
@@ -64,8 +74,6 @@ public partial class Player : CharacterBody2D
 
 		EquipStartingWeapon();
 		CallDeferred(nameof(PositionAtSpawnPoint));
-
-		// Уведомляем HealthUI о появлении
 		CallDeferred(nameof(NotifyHealthUI));
 	}
 
@@ -80,12 +88,10 @@ public partial class Player : CharacterBody2D
 
 	private void EquipStartingWeapon()
 	{
-		// 1. Проверяем, есть ли сохраненное оружие в глобальном менеджере забега
 		if (RunManager.Instance != null && RunManager.Instance.CurrentWeaponData != null)
 		{
 			StartingWeaponData = RunManager.Instance.CurrentWeaponData;
 		}
-		// 2. Иначе берем то, что настроено в инспекторе, либо дефолтный пистолет
 		else if (StartingWeaponData == null)
 		{
 			StartingWeaponData = GD.Load<WeaponData>("res://resources/weapons/projectile/pistol.tres");
@@ -97,10 +103,12 @@ public partial class Player : CharacterBody2D
 			
 			if (weapon != null)
 			{
-				weapon.Data = StartingWeaponData;
+				weapon.Data = StartingWeaponData; // ← ЭТО ВАЖНО!
 				_currentWeapon = weapon;
 				AddChild(_currentWeapon);
-				_currentWeapon.Position = new Vector2(15, 0);
+				
+				// Позиция оружия в руках игрока
+				_currentWeapon.Position = new Vector2(25, -5); // ← подбери под свой спрайт
 			}
 		}
 	}
@@ -179,7 +187,6 @@ public partial class Player : CharacterBody2D
 			_jumpsLeft = 1 + OrganManager.GetTotalExtraJumps();
 		}
 
-		// Используем кастомное действие "jump" вместо ui_accept
 		if (Input.IsActionJustPressed("jump") && _jumpsLeft > 0)
 		{
 			velocity.Y = JumpVelocity;
@@ -197,6 +204,7 @@ public partial class Player : CharacterBody2D
 		if (direction != 0)
 		{
 			velocity.X = direction * currentSpeed;
+			_lastDirection = direction;
 		}
 		else
 		{
@@ -206,13 +214,154 @@ public partial class Player : CharacterBody2D
 		Velocity = velocity;
 		MoveAndSlide();
 
-		// Автоматическая стрельба при зажатой кнопке мыши
+		UpdateAnimation(direction);
+
+		// ===== ПРОДВИНУТОЕ УПРАВЛЕНИЕ ОРУЖИЕМ =====
+		UpdateWeapon();
+
 		if (Input.IsMouseButtonPressed(MouseButton.Left) && _currentWeapon is AutomaticWeapon autoWeapon)
 		{
 			autoWeapon.ContinueFiring(GlobalPosition, GetGlobalMousePosition());
 		}
 
 		CheckEnemyCollisionForKnockback();
+	}
+
+	// ===== НОВЫЙ МЕТОД ДЛЯ УПРАВЛЕНИЯ ОРУЖИЕМ =====
+	private void UpdateWeapon()
+	{
+		if (_currentWeapon == null) return;
+
+		Vector2 mousePos = GetGlobalMousePosition();
+		Vector2 directionToMouse = (mousePos - GlobalPosition).Normalized();
+		
+		// Расстояние от игрока до оружия (можно будет настраивать для каждого оружия)
+		float weaponDistance = 6f;
+		
+		// Позиция оружия (вращается вокруг игрока)
+		_currentWeapon.Position = directionToMouse * weaponDistance;
+		
+		// Вращение оружия в сторону мыши
+		_currentWeapon.Rotation = directionToMouse.Angle();
+		
+		// ===== УМНАЯ СИСТЕМА ЗЕРКАЛИРОВАНИЯ =====
+		// Определяем, смотрит ли оружие влево
+		float angle = directionToMouse.Angle();
+		bool isFlipped = angle > Mathf.Pi / 2 || angle < -Mathf.Pi / 2;
+		
+		if (isFlipped)
+		{
+			// Оружие смотрит влево - зеркалим по Y
+			_currentWeapon.Scale = new Vector2(1, -1);
+			
+			// Если оружие слева, корректируем позицию, чтобы оно не перекрывало персонажа
+			// Можно добавить смещение в зависимости от оружия
+			if (_currentWeapon is WeaponBase weapon && weapon.Data != null)
+			{
+				// Немного смещаем оружие вверх, чтобы оно не перекрывало руку
+				_currentWeapon.Position += new Vector2(0, -2);
+			}
+		}
+		else
+		{
+			// Оружие смотрит вправо - нормальный масштаб
+			_currentWeapon.Scale = new Vector2(1, 1);
+		}
+		
+		// ===== ОТЛАДКА (можно закомментировать) =====
+		// GD.Print($"Оружие: позиция {_currentWeapon.Position}, угол {Mathf.RadToDeg(angle):F1}°");
+	}
+
+	// ===== ДОПОЛНИТЕЛЬНО: МЕТОД ДЛЯ СТРЕЛЬБЫ =====
+	private void ShootWeapon()
+	{
+		if (_currentWeapon == null) return;
+		
+		Vector2 mousePos = GetGlobalMousePosition();
+		_currentWeapon.Shoot(GlobalPosition, mousePos);
+		
+		// Если оружие не автоматическое, можно добавить эффект отдачи
+		if (_currentWeapon is not AutomaticWeapon)
+		{
+			// Эффект отдачи (опционально)
+			// Например, небольшая задержка перед следующим выстрелом
+		}
+	}
+
+	private void UpdateAnimation(float direction)
+	{
+		if (_animatedSprite == null || _animatedSprite.SpriteFrames == null) return;
+
+		bool isMoving = direction != 0;
+		bool isShooting = Input.IsMouseButtonPressed(MouseButton.Left);
+		
+		// ===== ИЗМЕНЕНО: используем _lastDirection когда стоим =====
+		float dirForAnimation = isMoving ? direction : _lastDirection;
+		string dir = dirForAnimation < 0 ? "left" : "right";
+		
+		if (isShooting)
+		{
+			string animName = $"shoot_{dir}";
+			if (_animatedSprite.SpriteFrames.HasAnimation(animName))
+			{
+				if (_animatedSprite.Animation != animName)
+				{
+					_animatedSprite.Play(animName);
+				}
+			}
+			else if (_animatedSprite.SpriteFrames.HasAnimation("shoot"))
+			{
+				if (_animatedSprite.Animation != "shoot")
+				{
+					_animatedSprite.Play("shoot");
+				}
+				_animatedSprite.FlipH = dirForAnimation < 0;
+			}
+			return;
+		}
+		
+		if (isMoving)
+		{
+			string animName = $"walk_{dir}";
+			if (_animatedSprite.SpriteFrames.HasAnimation(animName))
+			{
+				if (_animatedSprite.Animation != animName)
+				{
+					_animatedSprite.Play(animName);
+				}
+			}
+			else if (_animatedSprite.SpriteFrames.HasAnimation("walk"))
+			{
+				if (_animatedSprite.Animation != "walk")
+				{
+					_animatedSprite.Play("walk");
+				}
+				_animatedSprite.FlipH = dirForAnimation < 0;
+			}
+			return;
+		}
+		
+		// Покой - используем последнее направление
+		string idleAnim = $"idle_{dir}";
+		if (_animatedSprite.SpriteFrames.HasAnimation(idleAnim))
+		{
+			if (_animatedSprite.Animation != idleAnim)
+			{
+				_animatedSprite.Play(idleAnim);
+			}
+		}
+		else if (_animatedSprite.SpriteFrames.HasAnimation("idle"))
+		{
+			if (_animatedSprite.Animation != "idle")
+			{
+				_animatedSprite.Play("idle");
+			}
+			_animatedSprite.FlipH = dirForAnimation < 0;
+		}
+		else
+		{
+			_animatedSprite.Stop();
+		}
 	}
 
 	private void CheckEnemyCollisionForKnockback()
@@ -246,9 +395,25 @@ public partial class Player : CharacterBody2D
 		if ((isMouseClick || isFKey) && _currentWeapon != null)
 		{
 			_currentWeapon.Shoot(GlobalPosition, GetGlobalMousePosition());
+			
+			if (_currentWeapon is not AutomaticWeapon && _animatedSprite != null)
+			{
+				// ===== ИЗМЕНЕНО: используем _lastDirection =====
+				string dir = _lastDirection < 0 ? "left" : "right";
+				string animName = $"shoot_{dir}";
+				
+				if (_animatedSprite.SpriteFrames.HasAnimation(animName))
+				{
+					_animatedSprite.Play(animName);
+				}
+				else if (_animatedSprite.SpriteFrames.HasAnimation("shoot"))
+				{
+					_animatedSprite.Play("shoot");
+					_animatedSprite.FlipH = _lastDirection < 0;
+				}
+			}
 		}
 
-		// Отпускание кнопки для автоматического оружия
 		if (@event is InputEventMouseButton mbReleased && !mbReleased.Pressed && mbReleased.ButtonIndex == MouseButton.Left)
 		{
 			if (_currentWeapon is AutomaticWeapon autoWeapon)
@@ -265,7 +430,6 @@ public partial class Player : CharacterBody2D
 		CurrentHealth -= damage;
 		CurrentHealth = Mathf.Clamp(CurrentHealth, 0, MaxHealth);
 
-		// Сразу обновляем здоровье в глобальном менеджере забега
 		if (RunManager.Instance != null)
 		{
 			RunManager.Instance.CurrentPlayerHealth = CurrentHealth;
@@ -279,6 +443,23 @@ public partial class Player : CharacterBody2D
 		GD.Print($"Игрок получил урон! Здоровье: {CurrentHealth}");
 		StartInvulnerability(0.5f);
 
+		// ===== ИЗМЕНЕНО: используем _lastDirection =====
+		if (_animatedSprite != null)
+		{
+			string dir = _lastDirection < 0 ? "left" : "right";
+			string animName = $"hurt_{dir}";
+			
+			if (_animatedSprite.SpriteFrames.HasAnimation(animName))
+			{
+				_animatedSprite.Play(animName);
+			}
+			else if (_animatedSprite.SpriteFrames.HasAnimation("hurt"))
+			{
+				_animatedSprite.Play("hurt");
+				_animatedSprite.FlipH = _lastDirection < 0;
+			}
+		}
+
 		if (CurrentHealth <= 0)
 		{
 			Die();
@@ -288,7 +469,11 @@ public partial class Player : CharacterBody2D
 	private async void StartInvulnerability(float duration)
 	{
 		_isInvulnerable = true;
-		var sprite = GetNodeOrNull<Sprite2D>("Sprite2D");
+		var sprite = _animatedSprite as CanvasItem;
+		if (sprite == null)
+		{
+			sprite = GetNodeOrNull<Sprite2D>("Sprite2D");
+		}
 		
 		float elapsed = 0f;
 		while (elapsed < duration)
@@ -306,6 +491,23 @@ public partial class Player : CharacterBody2D
 	{
 		GD.Print("Игрок погиб!");
 
+		// ===== ИЗМЕНЕНО: используем _lastDirection =====
+		if (_animatedSprite != null)
+		{
+			string dir = _lastDirection < 0 ? "left" : "right";
+			string animName = $"die_{dir}";
+			
+			if (_animatedSprite.SpriteFrames.HasAnimation(animName))
+			{
+				_animatedSprite.Play(animName);
+			}
+			else if (_animatedSprite.SpriteFrames.HasAnimation("die"))
+			{
+				_animatedSprite.Play("die");
+				_animatedSprite.FlipH = _lastDirection < 0;
+			}
+		}
+
 		if (IsInGroup("Player"))
 		{
 			RemoveFromGroup("Player");
@@ -322,11 +524,9 @@ public partial class Player : CharacterBody2D
 		var sprite = GetNodeOrNull<Sprite2D>("Sprite2D");
 		if (sprite != null) sprite.Visible = false;
 
-		// Отключаем коллизию, чтобы враги не могли взаимодействовать с мертвым игроком
 		CollisionLayer = 0;
 		CollisionMask = 0;
 
-		// Удаляем игрока из сцены с небольшой задержкой, чтобы успели отработать другие системы
 		CallDeferred(nameof(DestroyPlayer));
 	}
 

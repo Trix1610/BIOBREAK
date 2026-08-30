@@ -99,6 +99,10 @@ layout_mode = 2
 [node name="VsyncToggle" type="CheckButton" parent="SettingsPanel/CenterContainer/VBoxContainer" unique_id=1208099414]
 layout_mode = 2
 
+[node name="ControlsButton" type="Button" parent="SettingsPanel/CenterContainer/VBoxContainer" unique_id=612890213]
+layout_mode = 2
+text = "Управление"
+
 [node name="BackButton" type="Button" parent="SettingsPanel/CenterContainer/VBoxContainer" unique_id=1791284774]
 layout_mode = 2
 text = "Назад"

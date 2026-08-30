@@ -1,18 +1,14 @@
-[gd_resource type="Resource" script_class="WeaponData" load_steps=2 format=3 uid="uid://smg_weapon"]
+[gd_resource type="Resource" script_class="WeaponData" format=3 uid="uid://dporvfijieiog"]
 
-[ext_resource type="Script" path="res://scripts/resources/WeaponData.cs" id="1_WeaponData"]
+[ext_resource type="Texture2D" uid="uid://bndorp8ob3bbm" path="res://assets/weapons/PNG higher resolution (@2x)/smg.png" id="1_lq0xg"]
+[ext_resource type="Script" uid="uid://4aii8m00dpf5" path="res://scripts/resources/WeaponData.cs" id="1_WeaponData"]
 
 [resource]
 script = ExtResource("1_WeaponData")
 WeaponName = "SMG"
 WeaponType = 1
+WeaponSprite = ExtResource("1_lq0xg")
 FireRate = 0.05
 BulletSpeed = 750.0
 Damage = 8
-PelletCount = 1
-SpreadAngle = 0.0
-RandomSpread = 0.0
-Range = 1000.0
-AreaRadius = 200.0
-CanPenetrate = false
-ExplosionDelay = 0.0
+WeaponScale = 0.1

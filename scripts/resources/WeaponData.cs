@@ -12,6 +12,9 @@ public partial class WeaponData : Resource
 	[Export] public float BulletSpeed { get; set; } = 550.0f;
 	[Export] public int Damage { get; set; } = 20;
 
+	// ===== ДОБАВЛЯЕМ МАСШТАБ ОРУЖИЯ =====
+	[Export] public float WeaponScale { get; set; } = 0.3f;
+
 	// Параметры для дробовика
 	[Export] public int PelletCount { get; set; } = 1;
 	[Export] public float SpreadAngle { get; set; } = 0f;

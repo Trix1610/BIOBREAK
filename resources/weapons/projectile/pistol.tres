@@ -1,7 +1,10 @@
 [gd_resource type="Resource" script_class="WeaponData" format=3 uid="uid://bc7j3id6tua4f"]
 
 [ext_resource type="Script" uid="uid://4aii8m00dpf5" path="res://scripts/resources/WeaponData.cs" id="1_1vsk4"]
+[ext_resource type="Texture2D" uid="uid://bp5ttid6tttq7" path="res://assets/weapons/PNG higher resolution (@2x)/pistol.png" id="1_8es66"]
 
 [resource]
 script = ExtResource("1_1vsk4")
+WeaponSprite = ExtResource("1_8es66")
+WeaponScale = 0.1
 metadata/_custom_type_script = "uid://4aii8m00dpf5"

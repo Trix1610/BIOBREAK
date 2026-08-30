@@ -2,21 +2,23 @@
 
 [ext_resource type="Script" uid="uid://crrfdeqoasdji" path="res://scripts/player/Player.cs" id="1_gfjak"]
 [ext_resource type="Script" uid="uid://bj222khert3pr" path="res://scripts/player/OrganManager.cs" id="2_4kuee"]
+[ext_resource type="SpriteFrames" uid="uid://d2qdwt4pa2hb8" path="res://resources/player/player_frames.tres" id="2_524rm"]
 
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_i0tg4"]
-size = Vector2(32, 32)
+size = Vector2(25, 52)
 
 [node name="Player" type="CharacterBody2D" unique_id=1765311499 groups=["Player"]]
 script = ExtResource("1_gfjak")
 healthUIPath = NodePath("")
 
-[node name="ColorRect" type="ColorRect" parent="." unique_id=1992095372]
-offset_left = -16.0
-offset_top = -16.0
-offset_right = 16.0
-offset_bottom = 16.0
+[node name="AnimatedSprite2D" type="AnimatedSprite2D" parent="." unique_id=1680036677]
+position = Vector2(0, -13)
+sprite_frames = ExtResource("2_524rm")
+animation = &"walk_left"
+frame = 8
 
 [node name="CollisionShape2D" type="CollisionShape2D" parent="." unique_id=1573323740]
+position = Vector2(-0.5, -9)
 shape = SubResource("RectangleShape2D_i0tg4")
 
 [node name="OrganManager" type="Node" parent="." unique_id=1725021778]
