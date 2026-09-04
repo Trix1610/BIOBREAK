@@ -1,0 +1,36 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!1045 &1
+EditorBuildSettings:
+  m_ObjectHideFlags: 0
+  serializedVersion: 2
+  m_Scenes:
+  - enabled: 0
+    path: Assets/Scenes/SampleScene.unity
+    guid: 8c9cfa26abfee488c85f1582747f6a02
+  - enabled: 1
+    path: Assets/Scenes/GAME.unity
+    guid: 272ec6149a81f5d4ea926aff496ed03e
+  - enabled: 1
+    path: Assets/Scenes/ROOM_00.unity
+    guid: 03287ebdf7e39cf4684665a8154e4ca7
+  - enabled: 1
+    path: Assets/Scenes/ROOM_01.unity
+    guid: 256226fe0f2266b4fb75bd27799478f2
+  - enabled: 1
+    path: Assets/Scenes/ROOM_02.unity
+    guid: a7a929aafc34cf74aacc2bcd270cf5fa
+  - enabled: 1
+    path: Assets/Scenes/ROOM_03.unity
+    guid: 5f43f2d9fe7640f448979a2ed3513be7
+  - enabled: 1
+    path: Assets/Scenes/ROOM_04.unity
+    guid: d2a6895540e1aa64abf94f38bec8322c
+  - enabled: 0
+    path: Assets/Scenes/ROOM_15.unity
+    guid: cf11b4fe4c8e71a4f82b962eeada0c39
+  - enabled: 0
+    path: Assets/Scenes/ROOM_14.unity
+    guid: 850b4e4c3f2cae145b73795b4e90a4be
+  m_configObjects:
+    com.unity.input.settings.actions: {fileID: -944628639613478452, guid: 2bcd2660ca9b64942af0de543d8d7100, type: 3}
