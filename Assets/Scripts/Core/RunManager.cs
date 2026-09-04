@@ -1,11 +1,18 @@
+using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.SceneManagement;
 
 public class RunManager : MonoBehaviour
 {
     public static RunManager Instance;
 
     private readonly Dictionary<string, string> roomConnections = new();
+    
+    public Dictionary<string, Vector2Int> DiscoveredRoomPositions { get; private set; } = new Dictionary<string, Vector2Int>();
+
+    // Список уже зачищенных комнат
+    private readonly HashSet<string> clearedRooms = new();
 
     private readonly string[] rooms =
     {
@@ -30,11 +37,74 @@ public class RunManager : MonoBehaviour
         StartNewRun();
     }
 
+    private void OnEnable()
+    {
+        SceneManager.sceneLoaded += OnSceneLoaded;
+    }
+
+    private void OnDisable()
+    {
+        SceneManager.sceneLoaded -= OnSceneLoaded;
+    }
+
     public void StartNewRun()
     {
         roomConnections.Clear();
+        DiscoveredRoomPositions.Clear();
+        clearedRooms.Clear();
+        
+        DiscoveredRoomPositions["ROOM_00"] = new Vector2Int(0, 0);
 
         GenerateRoute();
+    }
+
+    // Срабатывает автоматически при загрузке любой комнаты
+    private void OnSceneLoaded(Scene scene, LoadSceneMode mode)
+    {
+        string currentRoom = scene.name;
+
+        // 1. Автоматически меняем фон главной камеры на темно-серый
+        Camera roomCamera = Camera.main;
+        if (roomCamera != null)
+        {
+            roomCamera.clearFlags = CameraClearFlags.SolidColor;
+            roomCamera.backgroundColor = new Color(0.15f, 0.15f, 0.15f); // Тёмно-серый цвет
+        }
+
+        // 2. Если комната уже зачищена, дополнительно подчищаем оставшиеся объекты
+        if (clearedRooms.Contains(currentRoom))
+        {
+            StartCoroutine(ClearRoomObjectsRoutine());
+        }
+    }
+
+    private IEnumerator ClearRoomObjectsRoutine()
+    {
+        yield return null;
+        yield return null;
+
+        // Если вдруг какой-то объект проскочил Awake у врага, подчищаем по тегам
+        GameObject[] enemies = GameObject.FindGameObjectsWithTag("Enemy");
+        foreach (GameObject enemy in enemies)
+        {
+            Destroy(enemy);
+        }
+    }
+
+    public void MarkCurrentRoomAsCleared()
+    {
+        string currentRoom = SceneManager.GetActiveScene().name;
+        if (!clearedRooms.Contains(currentRoom))
+        {
+            clearedRooms.Add(currentRoom);
+            Debug.Log($"Комната {currentRoom} зачищена и сохранена в RunManager!");
+        }
+    }
+
+    public bool IsCurrentRoomCleared()
+    {
+        string currentRoom = SceneManager.GetActiveScene().name;
+        return clearedRooms.Contains(currentRoom);
     }
 
     private void GenerateRoute()
@@ -64,16 +134,10 @@ public class RunManager : MonoBehaviour
     {
         string key = room + "|" + direction;
 
-        if (roomConnections.TryGetValue(
-                key,
-                out string destination))
+        if (roomConnections.TryGetValue(key, out string destination))
         {
             return destination;
         }
-
-        Debug.LogError(
-            $"RunManager: connection not found: {key}"
-        );
 
         return null;
     }
@@ -83,7 +147,6 @@ public class RunManager : MonoBehaviour
         for (int i = list.Count - 1; i > 0; i--)
         {
             int randomIndex = Random.Range(0, i + 1);
-
             string temp = list[i];
             list[i] = list[randomIndex];
             list[randomIndex] = temp;

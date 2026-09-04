@@ -7,16 +7,26 @@ public class HealthUI : MonoBehaviour
 
     private CharacterStats stats;
 
-    private void Update()
+    private void Start()
     {
-        if (stats == null)
-        {
-            FindPlayer();
-            return;
-        }
+        FindPlayer();
+    }
 
-        hpText.text =
-            $"HP: {stats.CurrentHealth:0} / {stats.MaxHealth:0}";
+    private void OnEnable()
+    {
+        if (stats != null)
+        {
+            stats.OnHealthChanged += UpdateHealthDisplay;
+            UpdateHealthDisplay(stats.CurrentHealth);
+        }
+    }
+
+    private void OnDisable()
+    {
+        if (stats != null)
+        {
+            stats.OnHealthChanged -= UpdateHealthDisplay;
+        }
     }
 
     private void FindPlayer()
@@ -34,6 +44,20 @@ public class HealthUI : MonoBehaviour
             Debug.LogError(
                 "HealthUI: CharacterStats not found on Player."
             );
+        }
+        else
+        {
+            stats.OnHealthChanged += UpdateHealthDisplay;
+            UpdateHealthDisplay(stats.CurrentHealth);
+        }
+    }
+
+    private void UpdateHealthDisplay(float currentHealth)
+    {
+        if (hpText != null && stats != null)
+        {
+            hpText.text =
+                $"HP: {currentHealth:0} / {stats.MaxHealth:0}";
         }
     }
 }

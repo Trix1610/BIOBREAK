@@ -1,0 +1,290 @@
+ .editorconfig                                      |     4 [31m-[m
+ .gitattributes                                     |     2 [31m-[m
+ .gitignore                                         |    50 [32m+[m[31m-[m
+ .vsconfig                                          |     6 [32m+[m
+ Assets/Input.meta                                  |     8 [32m+[m
+ Assets/Input/PlayerInputActions.inputactions       |    90 [32m+[m
+ Assets/Input/PlayerInputActions.inputactions.meta  |    14 [32m+[m
+ Assets/Prefabs.meta                                |     8 [32m+[m
+ Assets/Prefabs/Characters.meta                     |     8 [32m+[m
+ Assets/Prefabs/Characters/Player.prefab            |   279 [32m+[m
+ Assets/Prefabs/Characters/Player.prefab.meta       |     7 [32m+[m
+ Assets/Prefabs/Enemies.meta                        |     8 [32m+[m
+ Assets/Prefabs/Items.meta                          |     8 [32m+[m
+ Assets/Prefabs/World.meta                          |     8 [32m+[m
+ Assets/Scenes.meta                                 |     8 [32m+[m
+ Assets/Scenes/GAME.unity                           |   876 [32m++[m
+ Assets/Scenes/GAME.unity.meta                      |     7 [32m+[m
+ Assets/Scenes/ROOM_00.unity                        |  2748 [32m+++++[m
+ Assets/Scenes/ROOM_00.unity.meta                   |     7 [32m+[m
+ Assets/Scenes/ROOM_01.unity                        |  2029 [32m++++[m
+ Assets/Scenes/ROOM_01.unity.meta                   |     7 [32m+[m
+ Assets/Scenes/ROOM_02.unity                        |  2029 [32m++++[m
+ Assets/Scenes/ROOM_02.unity.meta                   |     7 [32m+[m
+ Assets/Scenes/ROOM_03.unity                        |  2029 [32m++++[m
+ Assets/Scenes/ROOM_03.unity.meta                   |     7 [32m+[m
+ Assets/Scenes/ROOM_04.unity                        |  2029 [32m++++[m
+ Assets/Scenes/ROOM_04.unity.meta                   |     7 [32m+[m
+ Assets/Scenes/ROOM_14.unity                        |   938 [32m++[m
+ Assets/Scenes/ROOM_14.unity.meta                   |     7 [32m+[m
+ Assets/Scenes/ROOM_15.unity                        |   736 [32m++[m
+ Assets/Scenes/ROOM_15.unity.meta                   |     7 [32m+[m
+ Assets/Scripts.meta                                |     8 [32m+[m
+ Assets/Scripts/Character.meta                      |     8 [32m+[m
+ Assets/Scripts/Character/CameraFollow.cs           |    67 [32m+[m
+ Assets/Scripts/Character/CameraFollow.cs.meta      |     2 [32m+[m
+ Assets/Scripts/Character/CharacterController.cs    |    54 [32m+[m
+ .../Scripts/Character/CharacterController.cs.meta  |     2 [32m+[m
+ Assets/Scripts/Character/CharacterPersistence.cs   |    18 [32m+[m
+ .../Scripts/Character/CharacterPersistence.cs.meta |     2 [32m+[m
+ Assets/Scripts/Character/CharacterStats.cs         |    39 [32m+[m
+ Assets/Scripts/Character/CharacterStats.cs.meta    |     2 [32m+[m
+ Assets/Scripts/Core.meta                           |     8 [32m+[m
+ Assets/Scripts/Core/GameBootstrap.cs               |    10 [32m+[m
+ Assets/Scripts/Core/GameBootstrap.cs.meta          |     2 [32m+[m
+ Assets/Scripts/Core/GameManager.cs                 |    18 [32m+[m
+ Assets/Scripts/Core/GameManager.cs.meta            |     2 [32m+[m
+ Assets/Scripts/Core/RunManager.cs                  |    92 [32m+[m
+ Assets/Scripts/Core/RunManager.cs.meta             |     2 [32m+[m
+ Assets/Scripts/Core/ScreenTransition.cs            |   134 [32m+[m
+ Assets/Scripts/Core/ScreenTransition.cs.meta       |     2 [32m+[m
+ Assets/Scripts/Enemies.meta                        |     8 [32m+[m
+ Assets/Scripts/Room.meta                           |     8 [32m+[m
+ Assets/Scripts/Room/CharacterSpawnData.cs          |    16 [32m+[m
+ Assets/Scripts/Room/CharacterSpawnData.cs.meta     |     2 [32m+[m
+ Assets/Scripts/Room/CharacterSpawner.cs            |    45 [32m+[m
+ Assets/Scripts/Room/CharacterSpawner.cs.meta       |     2 [32m+[m
+ Assets/Scripts/Room/RoomExit.cs                    |    72 [32m+[m
+ Assets/Scripts/Room/RoomExit.cs.meta               |     2 [32m+[m
+ Assets/Scripts/UI.meta                             |     8 [32m+[m
+ Assets/Scripts/UI/HealthPersistence.cs             |    18 [32m+[m
+ Assets/Scripts/UI/HealthPersistence.cs.meta        |     2 [32m+[m
+ Assets/Scripts/UI/HealthUI.cs                      |    39 [32m+[m
+ Assets/Scripts/UI/HealthUI.cs.meta                 |     2 [32m+[m
+ Assets/Scripts/World.meta                          |     8 [32m+[m
+ Assets/Scripts/World/Collectible.cs                |    12 [32m+[m
+ Assets/Scripts/World/Collectible.cs.meta           |     2 [32m+[m
+ Assets/Scripts/World/DamageZone.cs                 |    20 [32m+[m
+ Assets/Scripts/World/DamageZone.cs.meta            |     2 [32m+[m
+ Assets/Settings.meta                               |     8 [32m+[m
+ Assets/Settings/DefaultVolumeProfile.asset         |   798 [32m++[m
+ Assets/Settings/DefaultVolumeProfile.asset.meta    |     8 [32m+[m
+ Assets/Settings/InputSystem_Actions.inputactions   |  1057 [32m++[m
+ .../Settings/InputSystem_Actions.inputactions.meta |    14 [32m+[m
+ Assets/Settings/Lit2DSceneTemplate.scenetemplate   |    71 [32m+[m
+ .../Settings/Lit2DSceneTemplate.scenetemplate.meta |     8 [32m+[m
+ Assets/Settings/Player_Physics.physicsMaterial2D   |    14 [32m+[m
+ .../Settings/Player_Physics.physicsMaterial2D.meta |     8 [32m+[m
+ Assets/Settings/Renderer2D.asset                   |    69 [32m+[m
+ Assets/Settings/Renderer2D.asset.meta              |     8 [32m+[m
+ Assets/Settings/Scenes.meta                        |     8 [32m+[m
+ Assets/Settings/Scenes/URP2DSceneTemplate.unity    |   350 [32m+[m
+ .../Settings/Scenes/URP2DSceneTemplate.unity.meta  |     7 [32m+[m
+ Assets/Settings/UniversalRP.asset                  |   148 [32m+[m
+ Assets/Settings/UniversalRP.asset.meta             |     8 [32m+[m
+ .../UniversalRenderPipelineGlobalSettings.asset    |   467 [32m+[m
+ ...niversalRenderPipelineGlobalSettings.asset.meta |     8 [32m+[m
+ Assets/TextMesh Pro.meta                           |     8 [32m+[m
+ Assets/TextMesh Pro/Examples & Extras.meta         |     8 [32m+[m
+ Assets/TextMesh Pro/Examples & Extras/Fonts.meta   |     8 [32m+[m
+ .../Examples & Extras/Fonts/Anton OFL.txt          |    93 [32m+[m
+ .../Examples & Extras/Fonts/Anton OFL.txt.meta     |     8 [32m+[m
+ .../TextMesh Pro/Examples & Extras/Fonts/Anton.ttf |   Bin [31m0[m -> [32m42376[m bytes
+ .../Examples & Extras/Fonts/Anton.ttf.meta         |    19 [32m+[m
+ .../Examples & Extras/Fonts/Bangers - OFL.txt      |    93 [32m+[m
+ .../Examples & Extras/Fonts/Bangers - OFL.txt.meta |     8 [32m+[m
+ .../Examples & Extras/Fonts/Bangers.ttf            |   Bin [31m0[m -> [32m39676[m bytes
+ .../Examples & Extras/Fonts/Bangers.ttf.meta       |    19 [32m+[m
+ .../Fonts/Electronic Highway Sign.TTF              |   Bin [31m0[m -> [32m73060[m bytes
+ .../Fonts/Electronic Highway Sign.TTF.meta         |    22 [32m+[m
+ .../Examples & Extras/Fonts/Oswald-Bold - OFL.txt  |    92 [32m+[m
+ .../Fonts/Oswald-Bold - OFL.txt.meta               |     8 [32m+[m
+ .../Examples & Extras/Fonts/Oswald-Bold.ttf        |   Bin [31m0[m -> [32m53056[m bytes
+ .../Examples & Extras/Fonts/Oswald-Bold.ttf.meta   |    19 [32m+[m
+ .../Examples & Extras/Fonts/Roboto-Bold - AFL.txt  |   202 [32m+[m
+ .../Fonts/Roboto-Bold - AFL.txt.meta               |     8 [32m+[m
+ .../Fonts/Roboto-Bold - License.txt                |     3 [32m+[m
+ .../Fonts/Roboto-Bold - License.txt.meta           |     8 [32m+[m
+ .../Examples & Extras/Fonts/Roboto-Bold.ttf        |   Bin [31m0[m -> [32m170760[m bytes
+ .../Examples & Extras/Fonts/Roboto-Bold.ttf.meta   |    22 [32m+[m
+ .../Examples & Extras/Fonts/Unity - OFL.txt        |    92 [32m+[m
+ .../Examples & Extras/Fonts/Unity - OFL.txt.meta   |     8 [32m+[m
+ .../TextMesh Pro/Examples & Extras/Fonts/Unity.ttf |   Bin [31m0[m -> [32m1644[m bytes
+ .../Examples & Extras/Fonts/Unity.ttf.meta         |    21 [32m+[m
+ .../TextMesh Pro/Examples & Extras/Materials.meta  |     9 [32m+[m
+ .../Materials/Crate - Surface Shader Scene.mat     |    84 [32m+[m
+ .../Crate - Surface Shader Scene.mat.meta          |     6 [32m+[m
+ .../Examples & Extras/Materials/Crate - URP.mat    |   141 [32m+[m
+ .../Materials/Crate - URP.mat.meta                 |     8 [32m+[m
+ .../Materials/Ground - Logo Scene.mat              |   207 [32m+[m
+ .../Materials/Ground - Logo Scene.mat.meta         |     6 [32m+[m
+ .../Materials/Ground - Surface Shader Scene.mat    |   112 [32m+[m
+ .../Ground - Surface Shader Scene.mat.meta         |     6 [32m+[m
+ .../Examples & Extras/Materials/Ground - URP.mat   |   176 [32m+[m
+ .../Materials/Ground - URP.mat.meta                |     8 [32m+[m
+ .../Materials/Small Crate_diffuse.mat              |   127 [32m+[m
+ .../Materials/Small Crate_diffuse.mat.meta         |     8 [32m+[m
+ Assets/TextMesh Pro/Examples & Extras/Prefabs.meta |     9 [32m+[m
+ .../Examples & Extras/Prefabs/Text Popup.prefab    |   280 [32m+[m
+ .../Prefabs/Text Popup.prefab.meta                 |     8 [32m+[m
+ .../Prefabs/TextMeshPro - Prefab 1.prefab          |   219 [32m+[m
+ .../Prefabs/TextMeshPro - Prefab 1.prefab.meta     |     6 [32m+[m
+ .../Prefabs/TextMeshPro - Prefab 2.prefab          |   219 [32m+[m
+ .../Prefabs/TextMeshPro - Prefab 2.prefab.meta     |     6 [32m+[m
+ .../TextMesh Pro/Examples & Extras/Resources.meta  |     9 [32m+[m
+ .../Resources/Color Gradient Presets.meta          |     8 [32m+[m
+ .../Blue to Purple - Vertical.asset                |    17 [32m+[m
+ .../Blue to Purple - Vertical.asset.meta           |     8 [32m+[m
+ .../Dark to Light Green - Vertical.asset           |    17 [32m+[m
+ .../Dark to Light Green - Vertical.asset.meta      |     8 [32m+[m
+ .../Light to Dark Green - Vertical.asset           |    17 [32m+[m
+ .../Light to Dark Green - Vertical.asset.meta      |     8 [32m+[m
+ .../Yellow to Orange - Vertical.asset              |    17 [32m+[m
+ .../Yellow to Orange - Vertical.asset.meta         |     8 [32m+[m
+ .../Resources/Fonts & Materials.meta               |     9 [32m+[m
+ .../Fonts & Materials/Anton SDF - Drop Shadow.mat  |   104 [32m+[m
+ .../Anton SDF - Drop Shadow.mat.meta               |     8 [32m+[m
+ .../Fonts & Materials/Anton SDF - Outline.mat      |   104 [32m+[m
+ .../Fonts & Materials/Anton SDF - Outline.mat.meta |     8 [32m+[m
+ .../Fonts & Materials/Anton SDF - Sunny Days.mat   |   104 [32m+[m
+ .../Anton SDF - Sunny Days.mat.meta                |     8 [32m+[m
+ .../Resources/Fonts & Materials/Anton SDF.asset    |   302 [32m+[m
+ .../Fonts & Materials/Anton SDF.asset.meta         |     8 [32m+[m
+ .../Bangers SDF - Drop Shadow - 2 Pass.mat         |   112 [32m+[m
+ .../Bangers SDF - Drop Shadow - 2 Pass.mat.meta    |     8 [32m+[m
+ .../Bangers SDF - Drop Shadow.mat                  |   110 [32m+[m
+ .../Bangers SDF - Drop Shadow.mat.meta             |     8 [32m+[m
+ .../Fonts & Materials/Bangers SDF - Outline.mat    |   110 [32m+[m
+ .../Bangers SDF - Outline.mat.meta                 |     8 [32m+[m
+ .../Fonts & Materials/Bangers SDF Glow.mat         |   113 [32m+[m
+ .../Fonts & Materials/Bangers SDF Glow.mat.meta    |     8 [32m+[m
+ .../Fonts & Materials/Bangers SDF Logo - URP.mat   |   151 [32m+[m
+ .../Bangers SDF Logo - URP.mat.meta                |     8 [32m+[m
+ .../Fonts & Materials/Bangers SDF Logo.mat         |   101 [32m+[m
+ .../Fonts & Materials/Bangers SDF Logo.mat.meta    |     6 [32m+[m
+ .../Resources/Fonts & Materials/Bangers SDF.asset  |   302 [32m+[m
+ .../Fonts & Materials/Bangers SDF.asset.meta       |     6 [32m+[m
+ .../Electronic Highway Sign SDF.asset              |   302 [32m+[m
+ .../Electronic Highway Sign SDF.asset.meta         |     8 [32m+[m
+ .../LiberationSans SDF - Metalic Green.mat         |   104 [32m+[m
+ .../LiberationSans SDF - Metalic Green.mat.meta    |     8 [32m+[m
+ .../LiberationSans SDF - Overlay.mat               |    62 [32m+[m
+ .../LiberationSans SDF - Overlay.mat.meta          |     8 [32m+[m
+ .../LiberationSans SDF - Soft Mask.mat             |   112 [32m+[m
+ .../LiberationSans SDF - Soft Mask.mat.meta        |     8 [32m+[m
+ .../Fonts & Materials/Oswald Bold SDF.asset        |   302 [32m+[m
+ .../Fonts & Materials/Oswald Bold SDF.asset.meta   |     8 [32m+[m
+ .../Roboto-Bold SDF - Drop Shadow.mat              |   104 [32m+[m
+ .../Roboto-Bold SDF - Drop Shadow.mat.meta         |     8 [32m+[m
+ .../Roboto-Bold SDF - HDRP Unlit.mat               |   191 [32m+[m
+ .../Roboto-Bold SDF - HDRP Unlit.mat.meta          |     8 [32m+[m
+ .../Roboto-Bold SDF - Surface.mat                  |   107 [32m+[m
+ .../Roboto-Bold SDF - Surface.mat.meta             |     8 [32m+[m
+ .../Fonts & Materials/Roboto-Bold SDF - URP.mat    |   157 [32m+[m
+ .../Roboto-Bold SDF - URP.mat.meta                 |     8 [32m+[m
+ .../Fonts & Materials/Roboto-Bold SDF.asset        |   302 [32m+[m
+ .../Fonts & Materials/Roboto-Bold SDF.asset.meta   |     8 [32m+[m
+ .../Unity SDF - HDRP LIT - Bloom.mat               |   200 [32m+[m
+ .../Unity SDF - HDRP LIT - Bloom.mat.meta          |     8 [32m+[m
+ .../Unity SDF - HDRP LIT - Outline.mat             |   148 [32m+[m
+ .../Unity SDF - HDRP LIT - Outline.mat.meta        |     8 [32m+[m
+ .../Resources/Fonts & Materials/Unity SDF.asset    |   389 [32m+[m
+ .../Fonts & Materials/Unity SDF.asset.meta         |     8 [32m+[m
+ .../Examples & Extras/Resources/Sprite Assets.meta |     9 [32m+[m
+ .../Sprite Assets/Default Sprite Asset.asset       |   351 [32m+[m
+ .../Sprite Assets/Default Sprite Asset.asset.meta  |     8 [32m+[m
+ .../Resources/Sprite Assets/DropCap Numbers.asset  |   406 [32m+[m
+ .../Sprite Assets/DropCap Numbers.asset.meta       |     8 [32m+[m
+ Assets/TextMesh Pro/Examples & Extras/Scenes.meta  |     9 [32m+[m
+ .../Scenes/01-  Single Line TextMesh Pro.unity     |   380 [32m+[m
+ .../01-  Single Line TextMesh Pro.unity.meta       |    24 [32m+[m
+ .../Scenes/02 - Multi-line TextMesh Pro.unity      |   384 [32m+[m
+ .../Scenes/02 - Multi-line TextMesh Pro.unity.meta |    24 [32m+[m
+ .../Scenes/03 - Line Justification.unity           |   896 [32m++[m
+ .../Scenes/03 - Line Justification.unity.meta      |    24 [32m+[m
+ .../Scenes/04 - Word Wrapping.unity                |   379 [32m+[m
+ .../Scenes/04 - Word Wrapping.unity.meta           |    24 [32m+[m
+ .../Examples & Extras/Scenes/05 - Style Tags.unity |  1017 [32m++[m
+ .../Scenes/05 - Style Tags.unity.meta              |    24 [32m+[m
+ .../Scenes/06 - Extra Rich Text Examples.unity     |   677 [32m++[m
+ .../06 - Extra Rich Text Examples.unity.meta       |     6 [32m+[m
+ .../07 - Superscript & Subscript Example.unity     |   383 [32m+[m
+ ...07 - Superscript & Subscript Example.unity.meta |    24 [32m+[m
+ .../Scenes/08 - Improved Text Alignment.unity      |   544 [32m+[m
+ .../Scenes/08 - Improved Text Alignment.unity.meta |     6 [32m+[m
+ .../Scenes/09 - Margin Tag Example.unity           |   945 [32m++[m
+ .../Scenes/09 - Margin Tag Example.unity.meta      |     8 [32m+[m
+ .../10 - Bullets & Numbered List Example.unity     |   665 [32m+[m
+ ...10 - Bullets & Numbered List Example.unity.meta |     8 [32m+[m
+ .../Scenes/11 - The Style Tag.unity                |   554 [32m+[m
+ .../Scenes/11 - The Style Tag.unity.meta           |     8 [32m+[m
+ .../Scenes/12 - Link Example.unity                 |   779 [32m++[m
+ .../Scenes/12 - Link Example.unity.meta            |     8 [32m+[m
+ .../Scenes/12a - Text Interactions.unity           |   807 [32m++[m
+ .../Scenes/12a - Text Interactions.unity.meta      |     8 [32m+[m
+ .../Scenes/13 - Soft Hyphenation.unity             |   507 [32m+[m
+ .../Scenes/13 - Soft Hyphenation.unity.meta        |     8 [32m+[m
+ .../Scenes/14 - Multi Font & Sprites.unity         |   544 [32m+[m
+ .../Scenes/14 - Multi Font & Sprites.unity.meta    |     8 [32m+[m
+ .../Scenes/15 - Inline Graphics & Sprites.unity    |   595 [32m+[m
+ .../15 - Inline Graphics & Sprites.unity.meta      |     6 [32m+[m
+ .../16 - Linked text overflow mode example.unity   |  1063 [32m++[m
+ ... - Linked text overflow mode example.unity.meta |     8 [32m+[m
+ .../Scenes/17 - Old Computer Terminal.unity        |   691 [32m++[m
+ .../Scenes/17 - Old Computer Terminal.unity.meta   |     8 [32m+[m
+ .../18 - ScrollRect & Masking & Layout.unity       |  9490 [32m+++++++++++++++[m
+ .../18 - ScrollRect & Masking & Layout.unity.meta  |     8 [32m+[m
+ .../Scenes/19 - Masking Texture & Soft Mask.unity  |   604 [32m+[m
+ .../19 - Masking Texture & Soft Mask.unity.meta    |     8 [32m+[m
+ .../Scenes/20 - Input Field with Scrollbar.unity   |  2242 [32m++++[m
+ .../20 - Input Field with Scrollbar.unity.meta     |     8 [32m+[m
+ .../Scenes/21 - Script Example.unity               |   239 [32m+[m
+ .../Scenes/21 - Script Example.unity.meta          |    24 [32m+[m
+ .../Scenes/22 - Basic Scripting Example.unity      |   447 [32m+[m
+ .../Scenes/22 - Basic Scripting Example.unity.meta |     8 [32m+[m
+ .../Scenes/23 - Animating Vertex Attributes.unity  |   520 [32m+[m
+ .../23 - Animating Vertex Attributes.unity.meta    |     8 [32m+[m
+ .../Scenes/24 - Surface Shader Example URP.unity   |  3160 [32m+++++[m
+ .../24 - Surface Shader Example URP.unity.meta     |    24 [32m+[m
+ .../Scenes/24 - Surface Shader Example.unity       |  2687 [32m+++++[m
+ .../Scenes/24 - Surface Shader Example.unity.meta  |    24 [32m+[m
+ .../Scenes/25 - Sunny Days Example.unity           |   615 [32m+[m
+ .../Scenes/25 - Sunny Days Example.unity.meta      |     8 [32m+[m
+ .../Scenes/26 - Dropdown Placeholder Example.unity |  3418 [32m++++++[m
+ .../26 - Dropdown Placeholder Example.unity.meta   |     7 [32m+[m
+ .../Scenes/27 - Double Pass Shader Example.unity   |   550 [32m+[m
+ .../27 - Double Pass Shader Example.unity.meta     |     7 [32m+[m
+ .../Scenes/28 - HDRP Shader Example.meta           |     8 [32m+[m
+ .../Scenes/28 - HDRP Shader Example.unity          |  2262 [32m++++[m
+ .../Scenes/28 - HDRP Shader Example.unity.meta     |     7 [32m+[m
+ .../Sky and Fog Volume Profile.asset               |    60 [32m+[m
+ .../Sky and Fog Volume Profile.asset.meta          |     8 [32m+[m
+ .../Scenes/Benchmark (Floating Text).unity         |   429 [32m+[m
+ .../Scenes/Benchmark (Floating Text).unity.meta    |    24 [32m+[m
+ Assets/TextMesh Pro/Examples & Extras/Scripts.meta |     9 [32m+[m
+ .../Examples & Extras/Scripts/Benchmark01.cs       |   128 [32m+[m
+ .../Examples & Extras/Scripts/Benchmark01.cs.meta  |    10 [32m+[m
+ .../Examples & Extras/Scripts/Benchmark01_UGUI.cs  |   135 [32m+[m
+ .../Scripts/Benchmark01_UGUI.cs.meta               |    10 [32m+[m
+ .../Examples & Extras/Scripts/Benchmark02.cs       |    97 [32m+[m
+ .../Examples & Extras/Scripts/Benchmark02.cs.meta  |    11 [32m+[m
+ .../Examples & Extras/Scripts/Benchmark03.cs       |    92 [32m+[m
+ .../Examples & Extras/Scripts/Benchmark03.cs.meta  |    11 [32m+[m
+ .../Examples & Extras/Scripts/Benchmark04.cs       |    85 [32m+[m
+ .../Examples & Extras/Scripts/Benchmark04.cs.meta  |    11 [32m+[m
+ .../Examples & Extras/Scripts/CameraController.cs  |   292 [32m+[m
+ .../Scripts/CameraController.cs.meta               |    10 [32m+[m
+ .../Examples & Extras/Scripts/ChatController.cs    |    51 [32m+[m
+ .../Scripts/ChatController.cs.meta                 |    12 [32m+[m
+ .../Examples & Extras/Scripts/DropdownSample.cs    |    19 [32m+[m
+ .../Scripts/DropdownSample.cs.meta                 |    11 [32m+[m
+ .../Examples & Extras/Scripts/EnvMapAnimator.cs    |    35 [32m+[m
+ .../Scripts/EnvMapAnimator.cs.meta                 |    12 [32m+[m
+ .../Examples & Extras/Scripts/ObjectSpin.cs        |    67 [32m+[m
+ .../Examples & Extras/Scripts/ObjectSpin.cs.meta   |    10 [32m+[m
+ .../Scripts/ShaderPropAnimator.cs                  |    51 [32m+[m
+ .../Scripts/ShaderPropAnimator.cs.meta             |    10 [32m+[m
+ .../Examples & Extras/Scripts/SimpleScript.cs      |    58 [32m+[m
+ .../Examples & Extras/Scripts/SimpleScript.cs.meta |    10 [32m+[m
+ .../Examples & Extras/Scripts/SkewTextExample.cs   |   158 [32m+[m
+ .../Scripts/SkewTextExample.cs.meta     

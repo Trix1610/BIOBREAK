@@ -2,8 +2,13 @@ using UnityEngine;
 
 public class CharacterSpawner : MonoBehaviour
 {
+    [Header("Player")]
     [SerializeField] private GameObject playerPrefab;
-    [SerializeField] private Transform playerSpawn;
+
+    [Header("Spawn Points")]
+    [SerializeField] private Transform spawnDefault;
+    [SerializeField] private Transform spawnLeft;
+    [SerializeField] private Transform spawnRight;
 
     private void Start()
     {
@@ -12,8 +17,26 @@ public class CharacterSpawner : MonoBehaviour
 
         Transform spawnPoint = GetSpawnPoint();
 
+        if (spawnPoint == null)
+        {
+            Debug.LogError(
+                "CharacterSpawner: Spawn Point is not assigned."
+            );
+
+            return;
+        }
+
         if (existingPlayer == null)
         {
+            if (playerPrefab == null)
+            {
+                Debug.LogError(
+                    "CharacterSpawner: Player Prefab is not assigned."
+                );
+
+                return;
+            }
+
             Instantiate(
                 playerPrefab,
                 spawnPoint.position,
@@ -31,15 +54,16 @@ public class CharacterSpawner : MonoBehaviour
 
     private Transform GetSpawnPoint()
     {
-        if (!string.IsNullOrEmpty(CharacterSpawnData.SpawnName))
+        switch (CharacterSpawnData.SpawnName)
         {
-            GameObject spawnObject =
-                GameObject.Find(CharacterSpawnData.SpawnName);
+            case "Spawn_Left":
+                return spawnLeft;
 
-            if (spawnObject != null)
-                return spawnObject.transform;
+            case "Spawn_Right":
+                return spawnRight;
+
+            default:
+                return spawnDefault;
         }
-
-        return playerSpawn;
     }
 }

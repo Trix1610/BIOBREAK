@@ -10,7 +10,7 @@ public class DamageZone : MonoBehaviour
             return;
 
         CharacterStats stats =
-            other.GetComponent<CharacterStats>();
+            other.GetComponentInParent<CharacterStats>();
 
         if (stats != null)
         {

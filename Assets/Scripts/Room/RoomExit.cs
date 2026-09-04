@@ -6,18 +6,34 @@ public class RoomExit : MonoBehaviour
     [Header("Exit")]
     [SerializeField] private string direction;
 
+    private bool isUsed;
+
     private void OnTriggerEnter2D(Collider2D other)
     {
         if (!other.CompareTag("Player"))
             return;
 
-        if (RunManager.Instance == null)
+        if (isUsed)
+            return;
+
+        // Проверяем, уничтожены ли все враги в комнате
+        if (GameManager.Instance != null && !GameManager.Instance.AreEnemiesCleared())
         {
-            Debug.LogError("RoomExit: RunManager.Instance is NULL.");
+            Debug.Log("Дверь заблокирована! Сначала уничтожьте всех врагов.");
             return;
         }
 
-        string currentRoom = SceneManager.GetActiveScene().name;
+        if (RunManager.Instance == null)
+        {
+            Debug.LogError(
+                "RoomExit: RunManager.Instance is NULL."
+            );
+
+            return;
+        }
+
+        string currentRoom =
+            SceneManager.GetActiveScene().name;
 
         string destinationRoom =
             RunManager.Instance.GetDestination(
@@ -54,8 +70,6 @@ public class RoomExit : MonoBehaviour
             return;
         }
 
-        CharacterSpawnData.SetSpawn(destinationSpawn);
-
         if (ScreenTransition.Instance == null)
         {
             Debug.LogError(
@@ -64,6 +78,10 @@ public class RoomExit : MonoBehaviour
 
             return;
         }
+
+        isUsed = true;
+
+        CharacterSpawnData.SetSpawn(destinationSpawn);
 
         ScreenTransition.Instance.LoadSceneWithTransition(
             destinationRoom
