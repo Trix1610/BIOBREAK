@@ -43,6 +43,19 @@ public class CharacterController : MonoBehaviour
     {
         CheckGrounded();
         StateMachine.Update();
+
+        // НОВАЯ ПРОВЕРКА: если игрок отпустил пробел во время полета вверх
+        // (Используем Keyboard.current из нового Input System)
+        if (Keyboard.current != null && Keyboard.current.spaceKey.wasReleasedThisFrame)
+        {
+            if (Rigidbody.linearVelocity.y > 0)
+            {
+                Rigidbody.linearVelocity = new Vector2(
+                    Rigidbody.linearVelocity.x, 
+                    Rigidbody.linearVelocity.y * 0.5f
+                );
+            }
+        }
     }
 
     private void FixedUpdate()
@@ -90,7 +103,10 @@ public class CharacterController : MonoBehaviour
         if (canJump)
         {
             CurrentJumps--;
-            StateMachine.ChangeState(new JumpState(this, Stats));
+            
+            // Если вы используете StateMachine для прыжка, оставьте как есть, 
+            // либо если прыжок задается импульсом напрямую, вызовите HandleJump()
+            StateMachine.ChangeState(new JumpState(this, Stats)); // Или ваш аналог
         }
     }
 
