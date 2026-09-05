@@ -1,4 +1,6 @@
+using System.Collections;
 using UnityEngine;
+using Weapons; // Добавили пространство имен для Bullet
 
 public class Pistol : Weapon
 {
@@ -36,7 +38,6 @@ public class Pistol : Weapon
         currentAmmo--;
         nextFireTime = Time.time + weaponData.fireRate;
 
-        // Вызываем спавн пули
         SpawnBullet();
 
         Debug.Log($"Pistol fired! Ammo: {currentAmmo}/{weaponData.maxAmmo}");
@@ -50,13 +51,19 @@ public class Pistol : Weapon
             return;
         }
 
-        // Создаем пулю в позиции и С ТЕКУЩИМ ПОВОРОТОМ FirePoint
         GameObject bullet = Instantiate(bulletPrefab, firePoint.position, firePoint.rotation);
+
+        // Передаем урон пуле (с явным приведением к int, если damage это float)
+        Bullet bulletScript = bullet.GetComponent<Bullet>();
+        if (bulletScript != null)
+        {
+            int pistolDamage = weaponData != null ? (int)weaponData.damage : 20; 
+            bulletScript.SetDamage(pistolDamage);
+        }
 
         Rigidbody2D rb = bullet.GetComponent<Rigidbody2D>();
         if (rb != null)
         {
-            // Пуля полетит в ту сторону, куда смотрит firePoint (его правая ось)
             rb.linearVelocity = firePoint.right * bulletSpeed;
         }
     }
@@ -69,7 +76,7 @@ public class Pistol : Weapon
         StartCoroutine(ReloadCoroutine());
     }
 
-    private System.Collections.IEnumerator ReloadCoroutine()
+    private IEnumerator ReloadCoroutine()
     {
         isReloading = true;
         Debug.Log("Reloading...");

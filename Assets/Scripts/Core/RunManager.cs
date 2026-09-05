@@ -13,6 +13,10 @@ public class RunManager : MonoBehaviour
 
     // Список уже зачищенных комнат
     private readonly HashSet<string> clearedRooms = new();
+    
+    // Новые списки для отслеживания наград
+    private readonly HashSet<string> roomsWithPendingReward = new();
+    private readonly HashSet<string> roomsRewardCollected = new();
 
     private readonly string[] rooms =
     {
@@ -52,10 +56,31 @@ public class RunManager : MonoBehaviour
         roomConnections.Clear();
         DiscoveredRoomPositions.Clear();
         clearedRooms.Clear();
+        roomsWithPendingReward.Clear();
+        roomsRewardCollected.Clear();
         
         DiscoveredRoomPositions["ROOM_00"] = new Vector2Int(0, 0);
 
         GenerateRoute();
+    }
+
+    // Методы для проверки и управления наградами
+    public bool HasPendingReward(string roomName) => roomsWithPendingReward.Contains(roomName);
+    public bool IsRewardCollected(string roomName) => roomsRewardCollected.Contains(roomName);
+
+    public void MarkRewardAsSpawned(string roomName)
+    {
+        if (!roomsRewardCollected.Contains(roomName))
+        {
+            roomsWithPendingReward.Add(roomName);
+        }
+    }
+
+    public void MarkRewardAsCollected(string roomName)
+    {
+        roomsWithPendingReward.Remove(roomName);
+        roomsRewardCollected.Add(roomName);
+        Debug.Log($"Награда в комнате {roomName} успешно подобрана!");
     }
 
     // Срабатывает автоматически при загрузке любой комнаты

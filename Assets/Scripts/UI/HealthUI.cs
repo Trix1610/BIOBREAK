@@ -1,3 +1,4 @@
+using System.Collections;
 using TMPro;
 using UnityEngine;
 
@@ -6,18 +7,21 @@ public class HealthUI : MonoBehaviour
     [SerializeField] private TMP_Text hpText;
 
     private CharacterStats stats;
+    private Coroutine findRoutine;
 
     private void Start()
     {
-        FindPlayer();
+        Debug.Log("[HealthUI] Start вызван. Начинаем поиск игрока...");
+        findRoutine = StartCoroutine(FindPlayerRoutine());
     }
 
     private void OnEnable()
     {
+        Debug.Log("[HealthUI] OnEnable вызван.");
+        // Если игрок уже был найден ранее, просто пробуем подписаться
         if (stats != null)
         {
-            stats.OnHealthChanged += UpdateHealthDisplay;
-            UpdateHealthDisplay(stats.CurrentHealth);
+            TrySubscribe();
         }
     }
 
@@ -27,37 +31,72 @@ public class HealthUI : MonoBehaviour
         {
             stats.OnHealthChanged -= UpdateHealthDisplay;
         }
+
+        // Останавливаем корутину, если объект выключился
+        if (findRoutine != null)
+        {
+            StopCoroutine(findRoutine);
+            findRoutine = null;
+        }
     }
 
-    private void FindPlayer()
+    private IEnumerator FindPlayerRoutine()
     {
-        GameObject player =
-            GameObject.FindGameObjectWithTag("Player");
+        GameObject player = null;
 
-        if (player == null)
-            return;
+        // Цикл будет крутиться, пока игрок или его компонент не появятся
+        while (player == null || stats == null)
+        {
+            player = GameObject.FindGameObjectWithTag("Player");
 
-        stats = player.GetComponent<CharacterStats>();
+            if (player != null)
+            {
+                stats = player.GetComponent<CharacterStats>();
+            }
 
+            // Если кто-то из них все еще не найден, ждем 0.2 секунды и повторяем
+            if (player == null || stats == null)
+            {
+                yield return new WaitForSeconds(0.2f);
+            }
+        }
+
+        Debug.Log("[HealthUI] Игрок и CharacterStats успешно найдены!");
+        TrySubscribe();
+    }
+
+    private void TrySubscribe()
+    {
         if (stats == null)
         {
-            Debug.LogError(
-                "HealthUI: CharacterStats not found on Player."
-            );
+            Debug.LogWarning("[HealthUI] TrySubscribe пропущен: stats == null.");
+            return;
         }
-        else
-        {
-            stats.OnHealthChanged += UpdateHealthDisplay;
-            UpdateHealthDisplay(stats.CurrentHealth);
-        }
+
+        stats.OnHealthChanged -= UpdateHealthDisplay;
+        stats.OnHealthChanged += UpdateHealthDisplay;
+        Debug.Log("[HealthUI] Успешно подписались на событие OnHealthChanged.");
+
+        UpdateHealthDisplay(stats.CurrentHealth);
     }
 
     private void UpdateHealthDisplay(float currentHealth)
     {
-        if (hpText != null && stats != null)
+        Debug.Log($"[HealthUI] UpdateHealthDisplay вызван со значением HP: {currentHealth}");
+
+        if (hpText == null)
         {
-            hpText.text =
-                $"HP: {currentHealth:0} / {stats.MaxHealth:0}";
+            Debug.LogError("[HealthUI] ОШИБКА: Не назначена ссылка на TMP_Text (hpText) в инспекторе!");
+            return;
         }
+
+        if (stats == null)
+        {
+            Debug.LogError("[HealthUI] ОШИБКА: stats == null внутри UpdateHealthDisplay!");
+            return;
+        }
+
+        hpText.text = $"HP: {currentHealth:0} / {stats.MaxHealth:0}";
+        Debug.Log($"[HealthUI] Текст на UI успешно обновлен на: {hpText.text}");
     }
 }

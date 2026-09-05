@@ -145,14 +145,11 @@ public class CharacterController : MonoBehaviour
         );
     }
 
-    public void TakeDamage(float damage)
+    public void TakeDamage(int damage)
     {
-        Stats.TakeDamage(damage);
-        StateMachine.ChangeState(new HurtState(this, Stats));
-
-        if (Stats.CurrentHealth <= 0)
+        if (Stats != null)
         {
-            StateMachine.ChangeState(new DeathState(this, Stats));
+            Stats.TakeDamage(damage);
         }
     }
 }

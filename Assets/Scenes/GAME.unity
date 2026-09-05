@@ -380,6 +380,8 @@ MonoBehaviour:
     serializedVersion: 2
     m_Bits: 64
   spawnYOffset: 1
+  jumpBonusAmount: 1
+  rewardHeightOffset: 1
 --- !u!4 &548934653
 Transform:
   m_ObjectHideFlags: 0

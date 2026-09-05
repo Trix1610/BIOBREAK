@@ -105,6 +105,13 @@ public class CharacterStats : MonoBehaviour
         }
     }
 
+    // Перегрузка для int (чтобы принимать урон от врагов, передающих целые числа)
+    public void TakeDamage(int damage)
+    {
+        TakeDamage((float)damage);
+    }
+
+    // Основной метод для float
     public void TakeDamage(float damage)
     {
         currentHealth -= damage;
@@ -113,11 +120,17 @@ public class CharacterStats : MonoBehaviour
             currentHealth = 0f;
 
         OnHealthChanged?.Invoke(currentHealth);
+        Debug.Log($"CharacterStats: получено урона {damage}. Осталось здоровья: {currentHealth}");
 
         if (currentHealth <= 0f)
         {
             OnDeath?.Invoke();
         }
+    }
+
+    public void Heal(int amount)
+    {
+        Heal((float)amount);
     }
 
     public void Heal(float amount)
