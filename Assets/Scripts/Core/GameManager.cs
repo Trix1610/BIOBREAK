@@ -16,7 +16,7 @@ namespace Core
         [SerializeField] private float spawnYOffset = 1f; // Высота спавна над землей
 
         [Header("Reward Settings")]
-        [SerializeField] private float jumpBonusAmount = 1f;   // Бонус к прыжку
+        [SerializeField] private GameObject[] rewardPrefabs;   // Массив префабов наград (случайный выбор)
         [SerializeField] private float rewardHeightOffset = 1f; // Высота над центром Ground_main
 
         private bool _rewardSpawnedInCurrentRoom = false;
@@ -178,6 +178,13 @@ namespace Core
 
         private void SpawnRewardAboveGroundMain()
         {
+            // Проверяем, что массив не пустой
+            if (rewardPrefabs == null || rewardPrefabs.Length == 0)
+            {
+                Debug.LogWarning("[GameManager] Массив префабов наград (rewardPrefabs) пуст в инспекторе GameManager!");
+                return;
+            }
+
             GameObject groundMain = GameObject.Find("Ground_Main");
             Vector3 spawnPosition = Vector3.zero;
 
@@ -208,89 +215,25 @@ namespace Core
                 Debug.LogWarning("[GameManager] Объект Ground_main не найден на сцене! Награда спавнится в точке (0,0).");
             }
 
-            // Создаем объект бонуса
-            GameObject collectible = new GameObject("JumpCollectible");
-            collectible.transform.position = spawnPosition;
+            // Рандомно выбираем один предмет из массива
+            int randomIndex = Random.Range(0, rewardPrefabs.Length);
+            GameObject selectedPrefab = rewardPrefabs[randomIndex];
 
-            SpriteRenderer spriteRend = collectible.AddComponent<SpriteRenderer>();
-            spriteRend.sprite = CreateCircleSprite();
-            spriteRend.color = Color.cyan;
-            spriteRend.sortingOrder = 10;
-            collectible.transform.localScale = new Vector3(0.4f, 0.4f, 1f);
-
-            CircleCollider2D circleCol = collectible.AddComponent<CircleCollider2D>();
-            circleCol.isTrigger = true;
-            circleCol.radius = 0.5f;
-
-            JumpCollectible collectibleComponent = collectible.AddComponent<JumpCollectible>();
-            collectibleComponent.jumpBonus = jumpBonusAmount;
-
-            Debug.Log("[GameManager] Все враги уничтожены! Комната зачищена, бонус к прыжку создан по центру Ground_main.");
-        }
-
-        private Sprite CreateCircleSprite()
-        {
-            Texture2D texture = new Texture2D(32, 32);
-            Color[] colors = new Color[32 * 32];
-            Vector2 center = new Vector2(15.5f, 15.5f);
-            float radius = 14f;
-
-            for (int y = 0; y < 32; y++)
+            if (selectedPrefab != null)
             {
-                for (int x = 0; x < 32; x++)
-                {
-                    float dist = Vector2.Distance(new Vector2(x, y), center);
-                    if (dist <= radius)
-                        colors[y * 32 + x] = Color.white;
-                    else
-                        colors[y * 32 + x] = Color.clear;
-                }
+                Instantiate(selectedPrefab, spawnPosition, Quaternion.identity);
+                Debug.Log($"[GameManager] Комната зачищена! Выпал случайный предмет: {selectedPrefab.name}");
             }
-
-            texture.SetPixels(colors);
-            texture.Apply();
-            return Sprite.Create(texture, new Rect(0, 0, 32, 32), new Vector2(0.5f, 0.5f), 32);
+            else
+            {
+                Debug.LogWarning($"[GameManager] Префаб под индексом {randomIndex} в массиве rewardPrefabs оказался null!");
+            }
         }
 
         public bool AreEnemiesCleared()
         {
             Enemy[] remainingEnemies = FindObjectsByType<Enemy>(FindObjectsInactive.Exclude);
             return remainingEnemies.Length == 0;
-        }
-    }
-
-    // Скрипт подбора бонуса: увеличивает maxJumps на 1
-    public class JumpCollectible : MonoBehaviour
-    {
-        public float jumpBonus = 1f;
-
-        private void OnTriggerEnter2D(Collider2D collision)
-        {
-            if (collision.CompareTag("Player"))
-            {
-                CharacterStats stats = collision.GetComponent<CharacterStats>() ?? collision.GetComponentInChildren<CharacterStats>();
-
-                if (stats != null)
-                {
-                    StatModifier jumpModifier = new StatModifier(jumpBonus, StatModifierType.Flat, this);
-                    stats.AddStatModifier(StatType.MaxJumps, jumpModifier);
-                
-                    Debug.Log("Игрок подобрал бонус! MaxJumps увеличен на 1 (теперь доступно прыжков: " + stats.MaxJumps + ").");
-
-                    // Фиксируем в RunManager, что награда в этой комнате успешно подобрана
-                    if (RunManager.Instance != null)
-                    {
-                        string currentRoom = SceneManager.GetActiveScene().name;
-                        RunManager.Instance.MarkRewardAsCollected(currentRoom);
-                    }
-                }
-                else
-                {
-                    Debug.LogWarning("На объекте игрока не найден компонент CharacterStats!");
-                }
-
-                Destroy(gameObject);
-            }
         }
     }
 }
