@@ -1,4 +1,3 @@
-using System.Collections;
 using System.Collections.Generic;
 using Enemies;
 using UnityEngine;
@@ -16,11 +15,11 @@ namespace Core
         [SerializeField] private float spawnYOffset = 1f; // Высота спавна над землей
 
         [Header("Reward Settings")]
-        [SerializeField] private GameObject[] rewardPrefabs;   // Массив префабов наград (случайный выбор)
+        [SerializeField] private GameObject[] rewardPrefabs;   // Массив префабов наград
         [SerializeField] private float rewardHeightOffset = 1f; // Высота над центром Ground_main
 
         private bool _rewardSpawnedInCurrentRoom = false;
-        private bool _enemiesSpawned = false; // Флаг: враги уже заспавнены на сцене
+        private bool _enemiesSpawned = false; // Флаг: враги уже заспавнены в этой комнате
 
         private void Awake()
         {
@@ -54,35 +53,40 @@ namespace Core
                 return;
             }
 
-            // Проверяем состояние комнаты при входе
-            if (RunManager.Instance != null)
+            // Проверяем, зачищена ли комната при входе
+            if (RunManager.Instance != null && RunManager.Instance.IsCurrentRoomCleared())
             {
                 string currentRoom = scene.name;
-
-                // Если комната уже зачищена
-                if (RunManager.Instance.IsCurrentRoomCleared())
+                if (!RunManager.Instance.IsRewardCollected(currentRoom))
                 {
-                    // Если награда ЕЩЕ НЕ СОБРАНА игроком, спавним её сразу при входе!
-                    if (!RunManager.Instance.IsRewardCollected(currentRoom))
-                    {
-                        _rewardSpawnedInCurrentRoom = true;
-                        StartCoroutine(SpawnRewardDelayed());
-                    }
-                    else
-                    {
-                        _rewardSpawnedInCurrentRoom = true;
-                    }
-                    return; // Врагов спавнить не нужно
+                    _rewardSpawnedInCurrentRoom = true;
+                    SpawnRewardAboveGroundMain();
+                }
+                else
+                {
+                    _rewardSpawnedInCurrentRoom = true;
                 }
             }
-
-            StartCoroutine(SpawnEnemiesDelayed());
         }
 
-        private IEnumerator SpawnRewardDelayed()
+        // Публичный метод для вызова из триггера двери
+        public void TriggerRoomActivation()
         {
-            yield return new WaitForSeconds(0.1f);
-            SpawnRewardAboveGroundMain();
+            string currentScene = SceneManager.GetActiveScene().name;
+
+            if (currentScene == "ROOM_00" || currentScene == "GAME")
+                return;
+
+            // Если враги уже спавнились или комната уже зачищена — ничего не делаем
+            if (_enemiesSpawned)
+                return;
+
+            if (RunManager.Instance != null && RunManager.Instance.IsCurrentRoomCleared())
+                return;
+
+            // Спавним врагов мгновенно (без задержек)
+            SpawnEnemiesOnGround();
+            _enemiesSpawned = true;
         }
 
         private void Update()
@@ -117,13 +121,6 @@ namespace Core
 
                 SpawnRewardAboveGroundMain();
             }
-        }
-
-        private IEnumerator SpawnEnemiesDelayed()
-        {
-            yield return new WaitForSeconds(0.2f);
-            SpawnEnemiesOnGround();
-            _enemiesSpawned = true;
         }
 
         private void SpawnEnemiesOnGround()
@@ -178,10 +175,9 @@ namespace Core
 
         private void SpawnRewardAboveGroundMain()
         {
-            // Проверяем, что массив не пустой
             if (rewardPrefabs == null || rewardPrefabs.Length == 0)
             {
-                Debug.LogWarning("[GameManager] Массив префабов наград (rewardPrefabs) пуст в инспекторе GameManager!");
+                Debug.LogWarning("[GameManager] Массив префабов наград (rewardPrefabs) пуст!");
                 return;
             }
 
@@ -210,23 +206,13 @@ namespace Core
 
                 spawnPosition.y += rewardHeightOffset;
             }
-            else
-            {
-                Debug.LogWarning("[GameManager] Объект Ground_main не найден на сцене! Награда спавнится в точке (0,0).");
-            }
 
-            // Рандомно выбираем один предмет из массива
             int randomIndex = Random.Range(0, rewardPrefabs.Length);
             GameObject selectedPrefab = rewardPrefabs[randomIndex];
 
             if (selectedPrefab != null)
             {
                 Instantiate(selectedPrefab, spawnPosition, Quaternion.identity);
-                Debug.Log($"[GameManager] Комната зачищена! Выпал случайный предмет: {selectedPrefab.name}");
-            }
-            else
-            {
-                Debug.LogWarning($"[GameManager] Префаб под индексом {randomIndex} в массиве rewardPrefabs оказался null!");
             }
         }
 

@@ -91,7 +91,7 @@ namespace Room
             }
         }
 
-        private void CloseGateSmooth()
+        public void CloseGateSmooth()
         {
             _isGateOpened = false;
 
