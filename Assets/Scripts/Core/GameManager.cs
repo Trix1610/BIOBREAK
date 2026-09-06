@@ -181,6 +181,28 @@ namespace Core
                 return;
             }
 
+            string currentScene = SceneManager.GetActiveScene().name;
+            int rewardIndex = -1;
+
+            // 1. СТРОГАЯ ПРОВЕРКА: если для этой комнаты уже сохранен индекс награды, берем его!
+            if (RunManager.Instance != null && RunManager.Instance.TryGetRoomRewardIndex(currentScene, out int savedIndex))
+            {
+                rewardIndex = savedIndex;
+                Debug.Log($"[GameManager] Загружаем ранее выпавшую награду с индексом: {rewardIndex} для комнаты {currentScene}");
+            }
+            else
+            {
+                // 2. Если это первый раз, выбираем случайно и СРАЗУ сохраняем в RunManager
+                rewardIndex = Random.Range(0, rewardPrefabs.Length);
+                
+                if (RunManager.Instance != null)
+                {
+                    RunManager.Instance.SaveRoomRewardIndex(currentScene, rewardIndex);
+                    Debug.Log($"[GameManager] Сгенерирована новая награда с индексом: {rewardIndex} для комнаты {currentScene}");
+                }
+            }
+
+            // Находим позицию над Ground_Main для спавна
             GameObject groundMain = GameObject.Find("Ground_Main");
             Vector3 spawnPosition = Vector3.zero;
 
@@ -207,8 +229,7 @@ namespace Core
                 spawnPosition.y += rewardHeightOffset;
             }
 
-            int randomIndex = Random.Range(0, rewardPrefabs.Length);
-            GameObject selectedPrefab = rewardPrefabs[randomIndex];
+            GameObject selectedPrefab = rewardPrefabs[rewardIndex];
 
             if (selectedPrefab != null)
             {

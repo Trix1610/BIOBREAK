@@ -12,25 +12,20 @@ namespace Core
 
         private void Start()
         {
-            // Запоминаем время появления объекта на сцене
             _spawnTime = Time.time;
         }
 
         private void OnTriggerEnter2D(Collider2D other)
         {
-            // Если сцена только что загрузилась (прошло меньше 0.3 сек), 
-            // игнорируем любые касания, чтобы игрок не триггерил комнату при спавне
+            // Защита от срабатывания в первый кадр при спавне
             if (Time.time - _spawnTime < 0.3f)
                 return;
 
             if (_triggered)
                 return;
 
+            // Реагируем ТОЛЬКО на игрока. Всё остальное (пули, враги) просто игнорируется.
             if (!other.CompareTag("Player"))
-                return;
-
-            // Проверка на пули (если вы добавили тег ранее)
-            if (other.CompareTag("Bullet"))
                 return;
 
             string currentScene = SceneManager.GetActiveScene().name;

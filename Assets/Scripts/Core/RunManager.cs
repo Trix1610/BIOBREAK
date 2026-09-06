@@ -14,9 +14,12 @@ public class RunManager : MonoBehaviour
     // Список уже зачищенных комнат
     private readonly HashSet<string> clearedRooms = new();
     
-    // Новые списки для отслеживания наград
+    // Списки для отслеживания наград
     private readonly HashSet<string> roomsWithPendingReward = new();
     private readonly HashSet<string> roomsRewardCollected = new();
+
+    // НОВОЕ: Словарь для запоминания индекса выпавшей награды в каждой комнате
+    private readonly Dictionary<string, int> roomRewardIndices = new();
 
     private readonly string[] rooms =
     {
@@ -58,6 +61,7 @@ public class RunManager : MonoBehaviour
         clearedRooms.Clear();
         roomsWithPendingReward.Clear();
         roomsRewardCollected.Clear();
+        roomRewardIndices.Clear(); // Очищаем сохраненные индексы наград при новом ране
         
         DiscoveredRoomPositions["ROOM_00"] = new Vector2Int(0, 0);
 
@@ -81,6 +85,17 @@ public class RunManager : MonoBehaviour
         roomsWithPendingReward.Remove(roomName);
         roomsRewardCollected.Add(roomName);
         Debug.Log($"Награда в комнате {roomName} успешно подобрана!");
+    }
+
+    // НОВЫЕ МЕТОДЫ: Сохранение и получение индекса конкретного предмета в комнате
+    public void SaveRoomRewardIndex(string roomName, int index)
+    {
+        roomRewardIndices[roomName] = index;
+    }
+
+    public bool TryGetRoomRewardIndex(string roomName, out int index)
+    {
+        return roomRewardIndices.TryGetValue(roomName, out index);
     }
 
     // Срабатывает автоматически при загрузке любой комнаты
