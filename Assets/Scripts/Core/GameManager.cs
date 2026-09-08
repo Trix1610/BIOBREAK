@@ -48,6 +48,9 @@ namespace Core
             _rewardSpawnedInCurrentRoom = false;
             _enemiesSpawned = false;
 
+            // Гарантируем, что время всегда идет при загрузке новой сцены
+            Time.timeScale = 1f;
+
             if (scene.name == "ROOM_00" || scene.name == "GAME")
             {
                 return;

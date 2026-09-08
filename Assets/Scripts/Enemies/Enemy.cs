@@ -35,8 +35,8 @@ namespace Enemies
         [SerializeField] private float healthLerpSpeed = 10f;
 
         [Header("Visual Effects")]
-        [SerializeField] private SpriteRenderer spriteRenderer; // Ссылка на спрайт для мигания
-        [SerializeField] private float flashDuration = 0.15f;     // Длительность вспышки
+        [SerializeField] private SpriteRenderer spriteRenderer; 
+        [SerializeField] private float flashDuration = 0.15f;     
         
         private int _currentHealth;
         private float _targetFillAmount;
@@ -67,7 +67,6 @@ namespace Enemies
             _targetFillAmount = 1f;
             _rb = GetComponent<Rigidbody2D>();
 
-            // Если SpriteRenderer не назначен через инспектор, пытаемся найти его автоматически
             if (spriteRenderer == null)
                 spriteRenderer = GetComponent<SpriteRenderer>();
 
@@ -86,7 +85,6 @@ namespace Enemies
 
         private void Update()
         {
-            // Безопасная проверка: обновляем полоску здоровья только если канвас существует и активен
             if (healthFillImage != null && healthFillImage.canvas != null)
             {
                 healthFillImage.fillAmount = Mathf.Lerp(healthFillImage.fillAmount, _targetFillAmount, Time.deltaTime * healthLerpSpeed);
@@ -198,14 +196,8 @@ namespace Enemies
                     {
                         method.Invoke(script, new object[] { damageAmount });
                         damageDealt = true;
-                        Debug.Log($"Враг нанес {damageAmount} урона через скрипт: {script.GetType().Name}");
                         break;
                     }
-                }
-
-                if (!damageDealt)
-                {
-                    Debug.LogWarning("Внимание: Объект с тегом Player столкнулся с врагом, но на нем не найден скрипт с методом TakeDamage(int)!");
                 }
             }
         }
@@ -213,7 +205,6 @@ namespace Enemies
         public void TakeDamage(int damage)
         {
             _currentHealth -= damage;
-            Debug.Log($"Враг получил урон: {damage}. Осталось здоровья: {_currentHealth}");
             
             if (healthCanvasObject != null && !healthCanvasObject.activeSelf)
             {
@@ -222,7 +213,16 @@ namespace Enemies
 
             _targetFillAmount = Mathf.Clamp01((float)_currentHealth / maxHealth);
 
-            // Запускаем эффект мигания белым цветом
+            // КОНТРОЛИРУЕМЫЙ ОТСКОК: гасим дикий вертикальный импульс снизу и даем аккуратный толчок вбок
+            if (_rb != null && _playerTransform != null)
+            {
+                float hitDirectionX = Mathf.Sign(transform.position.x - _playerTransform.position.x);
+                if (hitDirectionX == 0) hitDirectionX = 1f;
+
+                float controlledY = Mathf.Min(_rb.linearVelocity.y, 0.5f);
+                _rb.linearVelocity = new Vector2(hitDirectionX * 2.5f, controlledY);
+            }
+
             if (spriteRenderer != null)
             {
                 if (_flashCoroutine != null) StopCoroutine(_flashCoroutine);
@@ -241,7 +241,6 @@ namespace Enemies
 
         private void Die()
         {
-            // Отключаем коллайдер и физику, чтобы мертвый враг не наносил урон и не падал сквозь стены
             var collider = GetComponent<Collider2D>();
             if (collider != null) collider.enabled = false;
             
@@ -251,20 +250,17 @@ namespace Enemies
                 _rb.simulated = false;
             }
 
-            // Отключаем этот скрипт движения, чтобы враг больше не двигался
             enabled = false;
 
-            // Запускаем красивую анимацию исчезновения
             StartCoroutine(DeathAnimationRoutine());
         }
 
         private IEnumerator DeathAnimationRoutine()
         {
-            float duration = 0.25f; // Длительность анимации смерти в секундах
+            float duration = 0.25f;
             float elapsed = 0f;
             Vector3 initialScale = transform.localScale;
 
-            // Скрываем полоску здоровья сразу при смерти
             if (healthCanvasObject != null)
                 healthCanvasObject.SetActive(false);
 
@@ -273,10 +269,8 @@ namespace Enemies
                 elapsed += Time.deltaTime;
                 float t = elapsed / duration;
 
-                // Плавное уменьшение до нуля (схлопывание)
                 transform.localScale = Vector3.Lerp(initialScale, Vector3.zero, t);
 
-                // Плавное уменьшение прозрачности (если есть спрайт)
                 if (spriteRenderer != null)
                 {
                     Color color = spriteRenderer.color;

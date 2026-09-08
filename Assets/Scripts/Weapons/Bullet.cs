@@ -21,10 +21,13 @@ namespace Weapons
 
         private void OnCollisionEnter2D(Collision2D collision)
         {
+            if (collision.gameObject.CompareTag("RoomTrigger"))
+                return;
+
             Enemy enemy = collision.gameObject.GetComponent<Enemy>();
             if (enemy != null)
             {
-                enemy.TakeDamage(damage); // Наносим переданный урон
+                enemy.TakeDamage(damage); // Наносим урон врагу
             }
 
             Destroy(gameObject);
@@ -32,14 +35,11 @@ namespace Weapons
 
         private void OnTriggerEnter2D(Collider2D collision)
         {
-            // Если это триггер комнаты (или мы можем проверять, что это НЕ игрок и НЕ враг, кому наносим урон)
-            // Допустим, у нашего триггера комнаты можно проверить тег или просто игнорировать его:
-            if (collision.CompareTag("RoomTrigger")) // Можно дать триггеру тег RoomTrigger
+            if (collision.gameObject.CompareTag("RoomTrigger"))
             {
-                return; // Пуля просто пролетает сквозь него сквозь и не уничтожается!
+                return; 
             }
 
-            // Старая логика для остальных триггеров
             Destroy(gameObject);
         }
     }

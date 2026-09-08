@@ -290,7 +290,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: e99e821038388ff45aed9638e96db780, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::CharacterStats
-  maxHealth: 100
+  maxHealth: 10
   moveSpeed: 10
   jumpForce: 12
   maxJumps: 1
