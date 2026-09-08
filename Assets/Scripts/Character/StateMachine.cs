@@ -8,6 +8,9 @@ public class StateMachine
 
     public void ChangeState(ICharacterState newState)
     {
+        if (newState == null)
+            return;
+
         if (currentState != null)
         {
             currentState.Exit();

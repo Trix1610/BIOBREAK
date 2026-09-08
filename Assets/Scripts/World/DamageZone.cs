@@ -9,12 +9,9 @@ public class DamageZone : MonoBehaviour
         if (!other.CompareTag("Player"))
             return;
 
-        CharacterStats stats =
-            other.GetComponentInParent<CharacterStats>();
+        IDamageable damageable =
+            other.GetComponentInParent<IDamageable>();
 
-        if (stats != null)
-        {
-            stats.TakeDamage(damage);
-        }
+        damageable?.TakeDamage(damage);
     }
 }

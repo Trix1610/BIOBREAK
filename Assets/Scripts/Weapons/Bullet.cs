@@ -1,4 +1,3 @@
-using Enemies;
 using UnityEngine;
 
 namespace Weapons
@@ -24,11 +23,10 @@ namespace Weapons
             if (collision.gameObject.CompareTag("RoomTrigger"))
                 return;
 
-            Enemy enemy = collision.gameObject.GetComponent<Enemy>();
-            if (enemy != null)
-            {
-                enemy.TakeDamage(damage); // Наносим урон врагу
-            }
+            IDamageable damageable =
+                collision.gameObject.GetComponentInParent<IDamageable>();
+
+            damageable?.TakeDamage(damage);
 
             Destroy(gameObject);
         }
@@ -39,6 +37,11 @@ namespace Weapons
             {
                 return; 
             }
+
+            IDamageable damageable =
+                collision.gameObject.GetComponentInParent<IDamageable>();
+
+            damageable?.TakeDamage(damage);
 
             Destroy(gameObject);
         }

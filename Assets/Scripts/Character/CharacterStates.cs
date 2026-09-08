@@ -59,6 +59,7 @@ public class RunState : ICharacterState
         if (controller.MoveInput.magnitude < 0.1f)
         {
             controller.StateMachine.ChangeState(new IdleState(controller, stats));
+            return;
         }
 
         if (!controller.IsGrounded)

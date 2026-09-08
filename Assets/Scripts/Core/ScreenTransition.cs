@@ -76,6 +76,9 @@ public class ScreenTransition : MonoBehaviour
 
     private IEnumerator Fade(float from, float to)
     {
+        if (fadeCanvasGroup == null)
+            yield break;
+
         float time = 0f;
 
         fadeCanvasGroup.alpha = from;

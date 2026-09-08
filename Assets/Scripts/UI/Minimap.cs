@@ -33,6 +33,9 @@ public class Minimap : MaskableGraphic
         if (currentScene == "GAME")
             return;
 
+        if (currentScene == lastSceneName)
+            return;
+
         if (currentScene != lastSceneName && !string.IsNullOrEmpty(lastSceneName) && lastSceneName != "GAME")
         {
             if (!roomGridPositions.ContainsKey(currentScene))
@@ -67,14 +70,7 @@ public class Minimap : MaskableGraphic
     // Вспомогательный метод, который проверяет связь без красных логов в консоли
     private string GetSafeDestination(string room, string direction)
     {
-        // Проверяем через Reflection или просто зная структуру RunManager, 
-        // но проще всего добавить метод в сам Minimap или проверять напрямую, 
-        // если бы словарь был публичным. Раз словарь приватный, сделаем так:
-        
-        // Перехватываем стандартный метод, либо сделаем проще:
-        // Давайте просто вызовем GetDestination, но перед этим проверим, а есть ли путь.
-        // Так как RunManager выкидывает лог прямо внутри GetDestination, напишем тихий аналог проверки:
-        return null; 
+        return RunManager.Instance?.GetDestination(room, direction);
     }
 
     protected override void OnPopulateMesh(VertexHelper vh)

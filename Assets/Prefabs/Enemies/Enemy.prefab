@@ -505,23 +505,27 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Enemies.Enemy
   speed: 3
-  jumpForce: 10
+  jumpForce: 7
   extraStepAfterEdge: 1
   maxJumpDistanceX: 6
+  minJumpHeight: 0.75
+  jumpCooldown: 0.8
   damageAmount: 10
-  groundCheck: {fileID: 0}
+  groundCheck: {fileID: 7079859002637860120}
   groundCheckRadius: 0.15
   groundLayer:
     serializedVersion: 2
-    m_Bits: 0
-  platformCheck: {fileID: 0}
+    m_Bits: 64
+  platformCheck: {fileID: 974085560770402047}
   platformCheckDistance: 2
-  diagCheckPoint: {fileID: 0}
+  diagCheckPoint: {fileID: 4667471874968979134}
   diagCheckDistance: 4.5
   maxHealth: 60
   healthFillImage: {fileID: 1059586063427035386}
   healthCanvasObject: {fileID: 1803713209003633608}
   healthLerpSpeed: 10
+  spriteRenderer: {fileID: 0}
+  flashDuration: 0.15
 --- !u!50 &-7205472386623378585
 Rigidbody2D:
   serializedVersion: 5

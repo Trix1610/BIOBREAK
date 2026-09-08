@@ -20,6 +20,7 @@ namespace Core
 
         private bool _rewardSpawnedInCurrentRoom = false;
         private bool _enemiesSpawned = false; // Флаг: враги уже заспавнены в этой комнате
+        private int _activeEnemyCount;
 
         private void Awake()
         {
@@ -47,6 +48,7 @@ namespace Core
         {
             _rewardSpawnedInCurrentRoom = false;
             _enemiesSpawned = false;
+            _activeEnemyCount = 0;
 
             // Гарантируем, что время всегда идет при загрузке новой сцены
             Time.timeScale = 1f;
@@ -73,23 +75,23 @@ namespace Core
         }
 
         // Публичный метод для вызова из триггера двери
-        public void TriggerRoomActivation()
+        public bool TriggerRoomActivation()
         {
             string currentScene = SceneManager.GetActiveScene().name;
 
             if (currentScene == "ROOM_00" || currentScene == "GAME")
-                return;
+                return false;
 
             // Если враги уже спавнились или комната уже зачищена — ничего не делаем
             if (_enemiesSpawned)
-                return;
+                return true;
 
             if (RunManager.Instance != null && RunManager.Instance.IsCurrentRoomCleared())
-                return;
+                return false;
 
             // Спавним врагов мгновенно (без задержек)
-            SpawnEnemiesOnGround();
-            _enemiesSpawned = true;
+            _enemiesSpawned = SpawnEnemiesOnGround();
+            return _enemiesSpawned;
         }
 
         private void Update()
@@ -126,12 +128,12 @@ namespace Core
             }
         }
 
-        private void SpawnEnemiesOnGround()
+        private bool SpawnEnemiesOnGround()
         {
             if (enemyPrefab == null)
             {
                 Debug.LogWarning("[GameManager] Не задан префаб врага в инспекторе GameManager!");
-                return;
+            return false;
             }
 
             int enemiesCount = Random.Range(3, 6);
@@ -158,7 +160,9 @@ namespace Core
 
                 for (int i = 0; i < enemiesToSpawn; i++)
                 {
-                    Transform randomPlatform = validPlatforms[Random.Range(0, validPlatforms.Count)];
+                    int platformIndex = Random.Range(0, validPlatforms.Count);
+                    Transform randomPlatform = validPlatforms[platformIndex];
+                    validPlatforms.RemoveAt(platformIndex);
                 
                     float spawnY = randomPlatform.position.y + spawnYOffset;
                     float spawnX = randomPlatform.position.x;
@@ -173,7 +177,13 @@ namespace Core
                     Vector2 spawnPosition = new Vector2(spawnX, spawnY);
                     Instantiate(enemyPrefab, spawnPosition, Quaternion.identity);
                 }
+
+                _activeEnemyCount = enemiesToSpawn;
+                return enemiesToSpawn > 0;
             }
+
+            Debug.LogWarning("[GameManager] Не найдено платформ на groundLayer для spawn врагов.");
+            return false;
         }
 
         private void SpawnRewardAboveGroundMain()
@@ -242,8 +252,21 @@ namespace Core
 
         public bool AreEnemiesCleared()
         {
-            Enemy[] remainingEnemies = FindObjectsByType<Enemy>(FindObjectsInactive.Exclude);
-            return remainingEnemies.Length == 0;
+            if (RunManager.Instance != null && RunManager.Instance.IsCurrentRoomCleared())
+                return true;
+
+            if (!_enemiesSpawned)
+                return false;
+
+            return _activeEnemyCount == 0;
+        }
+
+        public bool IsRoomActive => _enemiesSpawned;
+
+        public void NotifyEnemyDefeated()
+        {
+            if (_activeEnemyCount > 0)
+                _activeEnemyCount--;
         }
     }
 }

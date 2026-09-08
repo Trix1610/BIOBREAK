@@ -12,6 +12,7 @@ public class CameraFollow : MonoBehaviour
     [SerializeField] private float maxY = 8f;
 
     private Camera cam;
+    private float nextTargetSearchTime;
 
     private void Awake()
     {
@@ -22,6 +23,10 @@ public class CameraFollow : MonoBehaviour
     {
         if (target == null)
         {
+            if (Time.time < nextTargetSearchTime)
+                return;
+
+            nextTargetSearchTime = Time.time + 0.2f;
             GameObject player =
                 GameObject.FindGameObjectWithTag("Player");
 

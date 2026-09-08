@@ -18,6 +18,17 @@ public class DieMenu : MonoBehaviour
             dieMenuUI.SetActive(false);
     }
 
+    private void OnEnable()
+    {
+        SceneManager.sceneLoaded += OnSceneLoaded;
+    }
+
+    private void OnSceneLoaded(Scene scene, LoadSceneMode mode)
+    {
+        UnsubscribeFromPlayer();
+        StartCoroutine(FindPlayerAndSubscribe());
+    }
+
     private System.Collections.IEnumerator FindPlayerAndSubscribe()
     {
         // Ждем, пока игрок появится на сцене и у него появится компонент CharacterStats
@@ -41,10 +52,16 @@ public class DieMenu : MonoBehaviour
 
     private void OnDestroy()
     {
-        // Отписываемся от события при уничтожении объекта (хорошая практика)
+        SceneManager.sceneLoaded -= OnSceneLoaded;
+        UnsubscribeFromPlayer();
+    }
+
+    private void UnsubscribeFromPlayer()
+    {
         if (playerStats != null)
         {
             playerStats.OnDeath -= ShowDieMenu;
+            playerStats = null;
         }
     }
     
@@ -81,7 +98,7 @@ public class DieMenu : MonoBehaviour
             Destroy(obj);
         }
 
-        SceneManager.LoadScene("Game");
+        SceneManager.LoadScene("GAME");
     }
     
     public void OnMainMenuClicked()

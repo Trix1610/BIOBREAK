@@ -1,6 +1,7 @@
 using System.Collections;
 using TMPro;
 using UnityEngine;
+using UnityEngine.SceneManagement;
 
 public class HealthUI : MonoBehaviour
 {
@@ -17,20 +18,29 @@ public class HealthUI : MonoBehaviour
 
     private void OnEnable()
     {
-        Debug.Log("[HealthUI] OnEnable вызван.");
-        // Если игрок уже был найден ранее, просто пробуем подписаться
+        SceneManager.sceneLoaded += OnSceneLoaded;
+
         if (stats != null)
         {
             TrySubscribe();
         }
     }
 
+    private void OnSceneLoaded(Scene scene, LoadSceneMode mode)
+    {
+        Unsubscribe();
+        stats = null;
+
+        if (findRoutine != null)
+            StopCoroutine(findRoutine);
+
+        findRoutine = StartCoroutine(FindPlayerRoutine());
+    }
+
     private void OnDisable()
     {
-        if (stats != null)
-        {
-            stats.OnHealthChanged -= UpdateHealthDisplay;
-        }
+        SceneManager.sceneLoaded -= OnSceneLoaded;
+        Unsubscribe();
 
         // Останавливаем корутину, если объект выключился
         if (findRoutine != null)
@@ -38,6 +48,12 @@ public class HealthUI : MonoBehaviour
             StopCoroutine(findRoutine);
             findRoutine = null;
         }
+    }
+
+    private void Unsubscribe()
+    {
+        if (stats != null)
+            stats.OnHealthChanged -= UpdateHealthDisplay;
     }
 
     private IEnumerator FindPlayerRoutine()

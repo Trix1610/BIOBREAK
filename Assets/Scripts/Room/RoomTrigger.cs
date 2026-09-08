@@ -38,13 +38,11 @@ namespace Core
                 return;
             }
 
-            _triggered = true;
-
             // 1. Спавним врагов
-            if (GameManager.Instance != null)
-            {
-                GameManager.Instance.TriggerRoomActivation();
-            }
+            if (GameManager.Instance == null || !GameManager.Instance.TriggerRoomActivation())
+                return;
+
+            _triggered = true;
 
             // 2. Закрываем двери
             RoomExit[] exits = FindObjectsByType<RoomExit>(FindObjectsInactive.Include);

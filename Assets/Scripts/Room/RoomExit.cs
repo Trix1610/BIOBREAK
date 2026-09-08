@@ -29,6 +29,9 @@ namespace Room
                 yield break;
             }
 
+            if (gateCollider != null)
+                gateCollider.enabled = false;
+
             // Изначально скрываем ворота, чтобы проиграть красивое появление сверху вниз
             if (gateImage != null)
             {
@@ -61,6 +64,14 @@ namespace Room
             string currentScene = SceneManager.GetActiveScene().name;
 
             if (currentScene == "ROOM_00" || currentScene == "GAME")
+            {
+                OpenGateInstant();
+                return;
+            }
+
+            if (GameManager.Instance != null &&
+                !GameManager.Instance.IsRoomActive &&
+                (RunManager.Instance == null || !RunManager.Instance.IsCurrentRoomCleared()))
             {
                 OpenGateInstant();
                 return;
@@ -183,7 +194,14 @@ namespace Room
             if (_isUsed)
                 return;
 
-            if (GameManager.Instance != null && !GameManager.Instance.AreEnemiesCleared())
+            string currentRoom = SceneManager.GetActiveScene().name;
+            if (currentRoom == "ROOM_00" || currentRoom == "GAME")
+            {
+                OpenGateInstant();
+            }
+
+            if (currentRoom != "ROOM_00" && currentRoom != "GAME" &&
+                GameManager.Instance != null && !GameManager.Instance.AreEnemiesCleared())
             {
                 Debug.Log("Дверь заблокирована! Сначала уничтожьте всех врагов.");
                 return;
@@ -195,7 +213,6 @@ namespace Room
                 return;
             }
 
-            string currentRoom = SceneManager.GetActiveScene().name;
             string destinationRoom = RunManager.Instance.GetDestination(currentRoom, direction);
 
             if (string.IsNullOrEmpty(destinationRoom))

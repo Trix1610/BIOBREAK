@@ -38,11 +38,22 @@ public class CharacterController : MonoBehaviour
     private void OnEnable()
     {
         SceneManager.sceneLoaded += OnSceneLoaded;
+
+        if (Stats != null)
+            Stats.OnDeath += HandleDeath;
     }
 
     private void OnDisable()
     {
         SceneManager.sceneLoaded -= OnSceneLoaded;
+
+        if (Stats != null)
+            Stats.OnDeath -= HandleDeath;
+    }
+
+    private void HandleDeath()
+    {
+        StateMachine.ChangeState(new DeathState(this, Stats));
     }
 
     private void OnSceneLoaded(Scene scene, LoadSceneMode mode)

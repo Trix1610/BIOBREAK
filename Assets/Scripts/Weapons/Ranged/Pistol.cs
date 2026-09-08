@@ -23,6 +23,9 @@ public class Pistol : Weapon
 
     public override void Attack()
     {
+        if (weaponData == null)
+            return;
+
         if (isReloading)
             return;
 
@@ -32,6 +35,12 @@ public class Pistol : Weapon
         if (currentAmmo <= 0)
         {
             Reload();
+            return;
+        }
+
+        if (bulletPrefab == null || firePoint == null)
+        {
+            Debug.LogWarning("Pistol: Не назначен BulletPrefab или FirePoint в инспекторе!");
             return;
         }
 

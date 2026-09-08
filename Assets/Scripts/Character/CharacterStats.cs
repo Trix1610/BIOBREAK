@@ -1,7 +1,7 @@
 using UnityEngine;
 using System;
 
-public class CharacterStats : MonoBehaviour
+public class CharacterStats : MonoBehaviour, IDamageable
 {
     [Header("Health")]
     [SerializeField] private float maxHealth = 100f;
@@ -12,6 +12,7 @@ public class CharacterStats : MonoBehaviour
     [SerializeField] private int maxJumps = 1;
 
     private float currentHealth;
+    private bool isDead;
 
     private ModifiedStat modifiedMaxHealth;
     private ModifiedStat modifiedMoveSpeed;
@@ -35,6 +36,7 @@ public class CharacterStats : MonoBehaviour
         modifiedMaxJumps = new ModifiedStat(maxJumps);
 
         currentHealth = MaxHealth;
+        isDead = false;
     }
 
     private void Start()
@@ -46,6 +48,7 @@ public class CharacterStats : MonoBehaviour
         modifiedMaxJumps.RemoveAllModifiers();
 
         currentHealth = MaxHealth;
+        isDead = false;
     }
 
     public void AddStatModifier(StatType statType, StatModifier modifier)
@@ -54,6 +57,7 @@ public class CharacterStats : MonoBehaviour
         {
             case StatType.MaxHealth:
                 modifiedMaxHealth.AddModifier(modifier);
+                ClampCurrentHealthToMax();
                 break;
             case StatType.MoveSpeed:
                 modifiedMoveSpeed.AddModifier(modifier);
@@ -73,6 +77,7 @@ public class CharacterStats : MonoBehaviour
         {
             case StatType.MaxHealth:
                 modifiedMaxHealth.RemoveModifier(modifier);
+                ClampCurrentHealthToMax();
                 break;
             case StatType.MoveSpeed:
                 modifiedMoveSpeed.RemoveModifier(modifier);
@@ -92,6 +97,7 @@ public class CharacterStats : MonoBehaviour
         {
             case StatType.MaxHealth:
                 modifiedMaxHealth.RemoveModifiersFromSource(source);
+                ClampCurrentHealthToMax();
                 break;
             case StatType.MoveSpeed:
                 modifiedMoveSpeed.RemoveModifiersFromSource(source);
@@ -114,6 +120,9 @@ public class CharacterStats : MonoBehaviour
     // Основной метод для float
     public void TakeDamage(float damage)
     {
+        if (isDead || damage <= 0f)
+            return;
+
         currentHealth -= damage;
 
         if (currentHealth < 0f)
@@ -124,6 +133,7 @@ public class CharacterStats : MonoBehaviour
 
         if (currentHealth <= 0f)
         {
+            isDead = true;
             OnDeath?.Invoke();
         }
     }
@@ -135,11 +145,23 @@ public class CharacterStats : MonoBehaviour
 
     public void Heal(float amount)
     {
+        if (isDead || amount <= 0f)
+            return;
+
         currentHealth += amount;
 
         if (currentHealth > MaxHealth)
             currentHealth = MaxHealth;
 
+        OnHealthChanged?.Invoke(currentHealth);
+    }
+
+    private void ClampCurrentHealthToMax()
+    {
+        if (currentHealth <= MaxHealth)
+            return;
+
+        currentHealth = MaxHealth;
         OnHealthChanged?.Invoke(currentHealth);
     }
 }

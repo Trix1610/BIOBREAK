@@ -6,9 +6,23 @@ public class ModifiedStat
 {
     private readonly float baseValue;
     private readonly List<StatModifier> modifiers = new();
+    private bool isDirty = true;
+    private float cachedValue;
 
     public float BaseValue => baseValue;
-    public float Value => CalculateFinalValue();
+    public float Value
+    {
+        get
+        {
+            if (isDirty)
+            {
+                cachedValue = CalculateFinalValue();
+                isDirty = false;
+            }
+
+            return cachedValue;
+        }
+    }
 
     public ModifiedStat(float baseValue)
     {
@@ -19,21 +33,28 @@ public class ModifiedStat
     {
         modifiers.Add(modifier);
         SortModifiers();
+        isDirty = true;
     }
 
     public void RemoveModifier(StatModifier modifier)
     {
-        modifiers.Remove(modifier);
+        if (modifiers.Remove(modifier))
+            isDirty = true;
     }
 
     public void RemoveModifiersFromSource(object source)
     {
-        modifiers.RemoveAll(m => m.Source == source);
+        if (modifiers.RemoveAll(m => m.Source == source) > 0)
+            isDirty = true;
     }
 
     public void RemoveAllModifiers()
     {
-        modifiers.Clear();
+        if (modifiers.Count > 0)
+        {
+            modifiers.Clear();
+            isDirty = true;
+        }
     }
 
     private void SortModifiers()

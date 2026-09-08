@@ -1,10 +1,11 @@
 using System.Collections;
+using Core;
 using UnityEngine;
 using UnityEngine.UI;
 
 namespace Enemies
 {
-    public class Enemy : MonoBehaviour
+    public class Enemy : MonoBehaviour, IDamageable
     {
         [Header("Movement Settings")]
         [SerializeField] private float speed = 3f;
@@ -13,6 +14,8 @@ namespace Enemies
 
         [Header("Jump Conditions")]
         [SerializeField] private float maxJumpDistanceX = 6.0f;
+        [SerializeField] private float minJumpHeight = 0.75f;
+        [SerializeField] private float jumpCooldown = 0.8f;
 
         [Header("Combat Settings")]
         [SerializeField] private int damageAmount = 10;
@@ -39,6 +42,7 @@ namespace Enemies
         [SerializeField] private float flashDuration = 0.15f;     
         
         private int _currentHealth;
+        private bool _isDead;
         private float _targetFillAmount;
         private Color _originalColor;
         private Coroutine _flashCoroutine;
@@ -54,6 +58,7 @@ namespace Enemies
         private bool _isWalkingPastEdge;
         private float _edgePositionX;
         private int _exitDirection = 1;
+        private float _nextJumpTime;
 
         private void Awake()
         {
@@ -108,6 +113,10 @@ namespace Enemies
             bool playerIsHigher = _playerTransform.position.y > transform.position.y + 0.3f;
             float distToPlayerX = Mathf.Abs(_playerTransform.position.x - transform.position.x);
             float dirToPlayerX = Mathf.Sign(_playerTransform.position.x - transform.position.x);
+            bool shouldConsiderJump =
+                _playerTransform.position.y - transform.position.y >= minJumpHeight &&
+                distToPlayerX <= maxJumpDistanceX &&
+                Time.time >= _nextJumpTime;
 
             if (_platformAbove)
             {
@@ -125,14 +134,14 @@ namespace Enemies
             {
                 if (Mathf.Abs(transform.position.x - _edgePositionX) >= extraStepAfterEdge)
                 {
-                    if (playerIsHigher && distToPlayerX <= maxJumpDistanceX)
-                        Jump(dirToPlayerX);
+                    if (shouldConsiderJump)
+                        TryJump(dirToPlayerX);
 
                     _isWalkingPastEdge = false;
                     _wasUnderPlatform = false;
                 }
             }
-            else if (!_platformAbove && playerIsHigher && distToPlayerX <= maxJumpDistanceX)
+            else if (!_platformAbove && shouldConsiderJump)
             {
                 Vector2 origin = diagCheckPoint != null ? (Vector2)diagCheckPoint.position : (Vector2)transform.position;
                 Vector2 rayDir = new Vector2(dirToPlayerX, 1.0f).normalized;
@@ -141,7 +150,7 @@ namespace Enemies
 
                 if (Physics2D.Raycast(origin, rayDir, diagCheckDistance, groundLayer).collider != null)
                 {
-                    Jump(dirToPlayerX);
+                    TryJump(dirToPlayerX);
                 }
             }
         }
@@ -182,28 +191,39 @@ namespace Enemies
             _wasUnderPlatform = false;
         }
 
+        private bool TryJump(float dirX)
+        {
+            if (Time.time < _nextJumpTime || !_isGrounded)
+                return false;
+
+            _nextJumpTime = Time.time + jumpCooldown;
+            Jump(dirX);
+            return true;
+        }
+
         private void OnCollisionEnter2D(Collision2D collision)
         {
-            if (collision.gameObject.CompareTag("Player"))
-            {
-                bool damageDealt = false;
+            if (!collision.gameObject.CompareTag("Player"))
+                return;
 
-                var scripts = collision.gameObject.GetComponents<MonoBehaviour>();
-                foreach (var script in scripts)
-                {
-                    var method = script.GetType().GetMethod("TakeDamage", new System.Type[] { typeof(int) });
-                    if (method != null)
-                    {
-                        method.Invoke(script, new object[] { damageAmount });
-                        damageDealt = true;
-                        break;
-                    }
-                }
-            }
+            IDamageable damageable =
+                collision.gameObject.GetComponentInParent<IDamageable>();
+
+            damageable?.TakeDamage(damageAmount);
+        }
+
+        public float CurrentHealth => _currentHealth;
+
+        void IDamageable.TakeDamage(float damage)
+        {
+            TakeDamage(Mathf.RoundToInt(damage));
         }
 
         public void TakeDamage(int damage)
         {
+            if (_isDead || damage <= 0)
+                return;
+
             _currentHealth -= damage;
             
             if (healthCanvasObject != null && !healthCanvasObject.activeSelf)
@@ -229,7 +249,11 @@ namespace Enemies
                 _flashCoroutine = StartCoroutine(FlashWhiteRoutine());
             }
 
-            if (_currentHealth <= 0) Die();
+            if (_currentHealth <= 0)
+            {
+                _isDead = true;
+                Die();
+            }
         }
 
         private IEnumerator FlashWhiteRoutine()
@@ -281,12 +305,14 @@ namespace Enemies
                 yield return null;
             }
 
+            GameManager.Instance?.NotifyEnemyDefeated();
             Destroy(gameObject);
         }
 
         private void OnEnable()
         {
             _currentHealth = maxHealth;
+            _isDead = false;
             _targetFillAmount = 1f;
             if (healthCanvasObject != null)
                 healthCanvasObject.SetActive(false);

@@ -4,6 +4,7 @@ using UnityEngine.InputSystem;
 public class WeaponAim : MonoBehaviour
 {
     private Camera mainCamera;
+    private float nextCameraSearchTime;
 
     private void Start()
     {
@@ -15,6 +16,10 @@ public class WeaponAim : MonoBehaviour
         // Если камера по какой-то причине пропала (например, уничтожена), пробуем найти её снова
         if (mainCamera == null)
         {
+            if (Time.time < nextCameraSearchTime)
+                return;
+
+            nextCameraSearchTime = Time.time + 0.2f;
             FindCamera();
             if (mainCamera == null) return; // Если камеры всё еще нет, пропускаем кадр, чтобы не было ошибки
         }

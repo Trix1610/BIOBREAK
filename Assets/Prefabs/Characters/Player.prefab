@@ -277,7 +277,7 @@ MonoBehaviour:
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 831f8acfdcc08c3489d92b407265b2ff, type: 3}
   m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::PlayerPersistence
+  m_EditorClassIdentifier: Assembly-CSharp::CharacterPersistence
 --- !u!114 &2971501752345140478
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -290,8 +290,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: e99e821038388ff45aed9638e96db780, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::CharacterStats
-  maxHealth: 10
-  moveSpeed: 10
+  maxHealth: 100
+  moveSpeed: 7
   jumpForce: 12
   maxJumps: 1
 --- !u!114 &-6219054374888652103
