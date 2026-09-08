@@ -1,6 +1,7 @@
 using UnityEngine;
 using UnityEngine.InputSystem;
 using UnityEngine.SceneManagement;
+using Core;
 
 public class CharacterController : MonoBehaviour
 {
@@ -22,6 +23,7 @@ public class CharacterController : MonoBehaviour
 
     private bool wasGrounded;
     private bool _isInputLocked = false;
+    private WeaponController weaponController;
 
     private void Awake()
     {
@@ -33,6 +35,8 @@ public class CharacterController : MonoBehaviour
         {
             currentWeapon = GetComponentInChildren<Weapon>();
         }
+
+        weaponController = new WeaponController(currentWeapon);
     }
 
     private void OnEnable()
@@ -58,7 +62,7 @@ public class CharacterController : MonoBehaviour
 
     private void OnSceneLoaded(Scene scene, LoadSceneMode mode)
     {
-        if (scene.name == "ROOM_00" || scene.name == "GAME")
+        if (scene.name == SceneNames.StartRoom || scene.name == SceneNames.Game)
             return;
 
         StartCoroutine(LockInputRoutine(0.20f));
@@ -152,9 +156,9 @@ public class CharacterController : MonoBehaviour
     {
         if (_isInputLocked) return;
 
-        if (value.isPressed && currentWeapon != null)
+        if (value.isPressed)
         {
-            currentWeapon.Attack();
+            weaponController.Attack();
         }
     }
 

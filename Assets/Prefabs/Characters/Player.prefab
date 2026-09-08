@@ -291,7 +291,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::CharacterStats
   maxHealth: 100
-  moveSpeed: 7
+  moveSpeed: 10
   jumpForce: 12
   maxJumps: 1
 --- !u!114 &-6219054374888652103

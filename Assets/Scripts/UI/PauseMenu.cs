@@ -1,6 +1,7 @@
 using UnityEngine;
 using UnityEngine.SceneManagement;
 using UnityEngine.InputSystem;
+using Core;
 
 
 public class PauseMenu : MonoBehaviour
@@ -94,6 +95,6 @@ public class PauseMenu : MonoBehaviour
         {
             Destroy(obj);
         }
-        SceneManager.LoadScene("MainMenu");
+        SceneFlowService.Load(SceneNames.MainMenu, false);
     }
 }

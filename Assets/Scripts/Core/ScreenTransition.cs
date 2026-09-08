@@ -4,7 +4,7 @@ using UnityEngine.SceneManagement;
 
 public class ScreenTransition : MonoBehaviour
 {
-    public static ScreenTransition Instance;
+    public static ScreenTransition Instance { get; private set; }
 
     [SerializeField] private CanvasGroup fadeCanvasGroup;
     [SerializeField] private float fadeDuration = 2f;
@@ -35,6 +35,12 @@ public class ScreenTransition : MonoBehaviour
         }
 
         FadeIn();
+    }
+
+    private void OnDestroy()
+    {
+        if (Instance == this)
+            Instance = null;
     }
 
     public void FadeIn()

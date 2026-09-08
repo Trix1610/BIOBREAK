@@ -23,7 +23,7 @@ namespace Room
         {
             string currentScene = SceneManager.GetActiveScene().name;
 
-            if (currentScene == "ROOM_00" || currentScene == "GAME")
+            if (currentScene == SceneNames.StartRoom || currentScene == SceneNames.Game)
             {
                 OpenGateInstant();
                 yield break;
@@ -50,7 +50,7 @@ namespace Room
                 return;
 
             string currentScene = SceneManager.GetActiveScene().name;
-            if (currentScene == "ROOM_00" || currentScene == "GAME")
+            if (currentScene == SceneNames.StartRoom || currentScene == SceneNames.Game)
                 return;
 
             if (GameManager.Instance != null && GameManager.Instance.AreEnemiesCleared())
@@ -63,7 +63,7 @@ namespace Room
         {
             string currentScene = SceneManager.GetActiveScene().name;
 
-            if (currentScene == "ROOM_00" || currentScene == "GAME")
+            if (currentScene == SceneNames.StartRoom || currentScene == SceneNames.Game)
             {
                 OpenGateInstant();
                 return;
@@ -195,12 +195,12 @@ namespace Room
                 return;
 
             string currentRoom = SceneManager.GetActiveScene().name;
-            if (currentRoom == "ROOM_00" || currentRoom == "GAME")
+            if (currentRoom == SceneNames.StartRoom || currentRoom == SceneNames.Game)
             {
                 OpenGateInstant();
             }
 
-            if (currentRoom != "ROOM_00" && currentRoom != "GAME" &&
+            if (currentRoom != SceneNames.StartRoom && currentRoom != SceneNames.Game &&
                 GameManager.Instance != null && !GameManager.Instance.AreEnemiesCleared())
             {
                 Debug.Log("Дверь заблокирована! Сначала уничтожьте всех врагов.");
@@ -223,7 +223,7 @@ namespace Room
 
             string destinationSpawn = (direction == "Right") ? "Spawn_Left" : "Spawn_Right";
 
-            if (ScreenTransition.Instance == null)
+            if (!SceneFlowService.CanUseTransition)
             {
                 Debug.LogError("RoomExit: ScreenTransition.Instance is NULL.");
                 return;
@@ -231,7 +231,7 @@ namespace Room
 
             _isUsed = true;
             CharacterSpawnData.SetSpawn(destinationSpawn);
-            ScreenTransition.Instance.LoadSceneWithTransition(destinationRoom);
+            SceneFlowService.LoadWithTransition(destinationRoom);
         }
     }
 }

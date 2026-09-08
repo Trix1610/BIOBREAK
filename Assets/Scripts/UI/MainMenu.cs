@@ -1,9 +1,10 @@
 using UnityEngine;
 using UnityEngine.SceneManagement;
+using Core;
 
 public class MainMenuManager : MonoBehaviour
 {
-    [SerializeField] private string firstGameScene = "ROOM_00"; 
+    [SerializeField] private string firstGameScene = SceneNames.StartRoom; 
 
     public void OnStartGameClicked()
     {
@@ -15,7 +16,7 @@ public class MainMenuManager : MonoBehaviour
             RunManager.Instance.StartNewRun();
         }
 
-        SceneManager.LoadScene(firstGameScene);
+        SceneFlowService.Load(firstGameScene, false);
     }
 
     public void OnExitGameClicked()

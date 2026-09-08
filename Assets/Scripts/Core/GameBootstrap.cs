@@ -1,10 +1,11 @@
 using UnityEngine;
+using Core;
 using UnityEngine.SceneManagement;
 
 public class GameBootstrap : MonoBehaviour
 {
     private void Start()
     {
-        SceneManager.LoadScene("ROOM_00");
+        SceneManager.LoadScene(SceneNames.StartRoom);
     }
 }

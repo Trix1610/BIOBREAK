@@ -209,7 +209,7 @@ namespace Enemies
             IDamageable damageable =
                 collision.gameObject.GetComponentInParent<IDamageable>();
 
-            damageable?.TakeDamage(damageAmount);
+            DamageSystem.Apply(damageable, damageAmount);
         }
 
         public float CurrentHealth => _currentHealth;

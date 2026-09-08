@@ -12,6 +12,6 @@ public class DamageZone : MonoBehaviour
         IDamageable damageable =
             other.GetComponentInParent<IDamageable>();
 
-        damageable?.TakeDamage(damage);
+        DamageSystem.Apply(damageable, damage);
     }
 }

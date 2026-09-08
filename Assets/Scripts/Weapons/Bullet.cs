@@ -26,7 +26,7 @@ namespace Weapons
             IDamageable damageable =
                 collision.gameObject.GetComponentInParent<IDamageable>();
 
-            damageable?.TakeDamage(damage);
+            DamageSystem.Apply(damageable, damage);
 
             Destroy(gameObject);
         }
@@ -41,7 +41,7 @@ namespace Weapons
             IDamageable damageable =
                 collision.gameObject.GetComponentInParent<IDamageable>();
 
-            damageable?.TakeDamage(damage);
+            DamageSystem.Apply(damageable, damage);
 
             Destroy(gameObject);
         }

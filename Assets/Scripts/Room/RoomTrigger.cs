@@ -29,7 +29,7 @@ namespace Core
                 return;
 
             string currentScene = SceneManager.GetActiveScene().name;
-            if (currentScene == "ROOM_00" || currentScene == "GAME")
+            if (currentScene == SceneNames.StartRoom || currentScene == SceneNames.Game)
                 return;
 
             if (RunManager.Instance != null && RunManager.Instance.IsCurrentRoomCleared())

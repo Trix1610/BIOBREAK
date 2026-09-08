@@ -1,6 +1,7 @@
 using UnityEngine;
 using UnityEngine.SceneManagement;
 using UnityEngine.InputSystem;
+using Core;
 
 public class DieMenu : MonoBehaviour
 {
@@ -98,7 +99,7 @@ public class DieMenu : MonoBehaviour
             Destroy(obj);
         }
 
-        SceneManager.LoadScene("GAME");
+        SceneFlowService.Load(SceneNames.Game, false);
     }
     
     public void OnMainMenuClicked()
@@ -116,6 +117,6 @@ public class DieMenu : MonoBehaviour
         {
             Destroy(obj);
         }
-        SceneManager.LoadScene("MainMenu");
+        SceneFlowService.Load(SceneNames.MainMenu, false);
     }
 }

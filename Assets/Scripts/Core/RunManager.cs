@@ -1,11 +1,12 @@
 using System.Collections;
 using System.Collections.Generic;
+using Core;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 
 public class RunManager : MonoBehaviour
 {
-    public static RunManager Instance;
+    public static RunManager Instance { get; private set; }
 
     private readonly Dictionary<string, string> roomConnections = new();
     
@@ -23,7 +24,7 @@ public class RunManager : MonoBehaviour
 
     private readonly string[] rooms =
     {
-        "ROOM_00",
+        SceneNames.StartRoom,
         "ROOM_01",
         "ROOM_02",
         "ROOM_03",
@@ -54,6 +55,12 @@ public class RunManager : MonoBehaviour
         SceneManager.sceneLoaded -= OnSceneLoaded;
     }
 
+    private void OnDestroy()
+    {
+        if (Instance == this)
+            Instance = null;
+    }
+
     public void StartNewRun()
     {
         roomConnections.Clear();
@@ -63,7 +70,7 @@ public class RunManager : MonoBehaviour
         roomsRewardCollected.Clear();
         roomRewardIndices.Clear(); // Очищаем сохраненные индексы наград при новом ране
         
-        DiscoveredRoomPositions["ROOM_00"] = new Vector2Int(0, 0);
+        DiscoveredRoomPositions[SceneNames.StartRoom] = new Vector2Int(0, 0);
 
         GenerateRoute();
     }
@@ -153,9 +160,9 @@ public class RunManager : MonoBehaviour
 
         Shuffle(shuffledRooms);
 
-        shuffledRooms.Remove("ROOM_00");
+        shuffledRooms.Remove(SceneNames.StartRoom);
 
-        string previousRoom = "ROOM_00";
+        string previousRoom = SceneNames.StartRoom;
 
         foreach (string room in shuffledRooms)
         {

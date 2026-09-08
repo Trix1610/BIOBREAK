@@ -2,6 +2,7 @@ using UnityEngine;
 using UnityEngine.UI;
 using System.Collections.Generic;
 using UnityEngine.SceneManagement;
+using Core;
 
 [RequireComponent(typeof(CanvasRenderer))]
 public class Minimap : MaskableGraphic
@@ -22,7 +23,7 @@ public class Minimap : MaskableGraphic
     protected override void Awake()
     {
         base.Awake();
-        roomGridPositions["ROOM_00"] = new Vector2Int(0, 0);
+        roomGridPositions[SceneNames.StartRoom] = new Vector2Int(0, 0);
     }
 
     private void Update()
@@ -30,13 +31,13 @@ public class Minimap : MaskableGraphic
         string currentScene = SceneManager.GetActiveScene().name;
 
         // Игнорируем техническую сцену контейнера
-        if (currentScene == "GAME")
+        if (currentScene == SceneNames.Game)
             return;
 
         if (currentScene == lastSceneName)
             return;
 
-        if (currentScene != lastSceneName && !string.IsNullOrEmpty(lastSceneName) && lastSceneName != "GAME")
+        if (currentScene != lastSceneName && !string.IsNullOrEmpty(lastSceneName) && lastSceneName != SceneNames.Game)
         {
             if (!roomGridPositions.ContainsKey(currentScene))
             {
@@ -83,7 +84,7 @@ public class Minimap : MaskableGraphic
         Vector2 centerOffset = rectTransform.rect.center;
         string currentScene = SceneManager.GetActiveScene().name;
 
-        if (currentScene != "GAME" && !roomGridPositions.ContainsKey(currentScene))
+        if (currentScene != SceneNames.Game && !roomGridPositions.ContainsKey(currentScene))
         {
             roomGridPositions[currentScene] = Vector2Int.zero;
         }
