@@ -1,6 +1,11 @@
+using UnityEngine;
+using Weapons;
+
 public sealed class WeaponController
 {
     private readonly Weapon weapon;
+
+    public bool HasWeapon => weapon != null;
 
     public WeaponController(Weapon weapon)
     {

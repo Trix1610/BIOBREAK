@@ -1,5 +1,25 @@
+using System.Collections.Generic;
+
 namespace Core
 {
+    public sealed class RunState
+    {
+        public Dictionary<string, string> RoomConnections { get; } = new();
+        public HashSet<string> ClearedRooms { get; } = new();
+        public HashSet<string> RoomsWithPendingReward { get; } = new();
+        public HashSet<string> RoomsRewardCollected { get; } = new();
+        public Dictionary<string, int> RoomRewardIndices { get; } = new();
+
+        public void Reset()
+        {
+            RoomConnections.Clear();
+            ClearedRooms.Clear();
+            RoomsWithPendingReward.Clear();
+            RoomsRewardCollected.Clear();
+            RoomRewardIndices.Clear();
+        }
+    }
+
     public sealed class RoomLifecycle
     {
         public bool RewardSpawned { get; private set; }

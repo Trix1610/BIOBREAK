@@ -11,12 +11,12 @@ public class CharacterController : MonoBehaviour
     [SerializeField] private LayerMask groundLayer;
 
     [Header("Combat")]
-    [SerializeField] private Weapon currentWeapon; // Ссылка на оружие (пистолет)
+    [SerializeField] private Weapon currentWeapon;
 
     public StateMachine StateMachine { get; private set; }
     public Rigidbody2D Rigidbody { get; private set; }
     public CharacterStats Stats { get; private set; }
-    public Weapon CurrentWeapon => currentWeapon; 
+    public Weapon CurrentWeapon => currentWeapon;
     public Vector2 MoveInput { get; private set; }
     public bool IsGrounded { get; private set; }
     public int CurrentJumps { get; set; }
@@ -71,15 +71,13 @@ public class CharacterController : MonoBehaviour
     private System.Collections.IEnumerator LockInputRoutine(float duration)
     {
         _isInputLocked = true;
-        // Ввод НЕ сбрасываем, чтобы состояние нажатой клавиши сохранялось в памяти!
-        
         yield return new WaitForSeconds(duration);
-
         _isInputLocked = false;
     }
 
     private void Start()
     {
+        CurrentJumps = Stats.MaxJumps;
         StateMachine.ChangeState(new IdleState(this, Stats));
     }
 
@@ -94,7 +92,7 @@ public class CharacterController : MonoBehaviour
             if (Rigidbody.linearVelocity.y > 0)
             {
                 Rigidbody.linearVelocity = new Vector2(
-                    Rigidbody.linearVelocity.x, 
+                    Rigidbody.linearVelocity.x,
                     Rigidbody.linearVelocity.y * 0.5f
                 );
             }
@@ -125,7 +123,6 @@ public class CharacterController : MonoBehaviour
 
     public void OnMove(InputValue value)
     {
-        // Не блокируем считывание ввода, даже если идет микро-пауза при входе в комнату
         MoveInput = value.Get<Vector2>();
     }
 
@@ -164,8 +161,6 @@ public class CharacterController : MonoBehaviour
 
     public void HandleMovement()
     {
-        // Пока идет блокировка (0.25с), глушим скорость движения в ноль, 
-        // но игрок может продолжать удерживать клавишу «Вправо»
         float targetX = _isInputLocked ? 0f : MoveInput.x * Stats.MoveSpeed;
 
         Rigidbody.linearVelocity = new Vector2(

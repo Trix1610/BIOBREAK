@@ -8,19 +8,9 @@ public class RunManager : MonoBehaviour
 {
     public static RunManager Instance { get; private set; }
 
-    private readonly Dictionary<string, string> roomConnections = new();
+    private readonly Core.RunState runState = new();
     
     public Dictionary<string, Vector2Int> DiscoveredRoomPositions { get; private set; } = new Dictionary<string, Vector2Int>();
-
-    // Список уже зачищенных комнат
-    private readonly HashSet<string> clearedRooms = new();
-    
-    // Списки для отслеживания наград
-    private readonly HashSet<string> roomsWithPendingReward = new();
-    private readonly HashSet<string> roomsRewardCollected = new();
-
-    // НОВОЕ: Словарь для запоминания индекса выпавшей награды в каждой комнате
-    private readonly Dictionary<string, int> roomRewardIndices = new();
 
     private readonly string[] rooms =
     {
@@ -63,12 +53,8 @@ public class RunManager : MonoBehaviour
 
     public void StartNewRun()
     {
-        roomConnections.Clear();
+        runState.Reset();
         DiscoveredRoomPositions.Clear();
-        clearedRooms.Clear();
-        roomsWithPendingReward.Clear();
-        roomsRewardCollected.Clear();
-        roomRewardIndices.Clear(); // Очищаем сохраненные индексы наград при новом ране
         
         DiscoveredRoomPositions[SceneNames.StartRoom] = new Vector2Int(0, 0);
 
@@ -76,33 +62,33 @@ public class RunManager : MonoBehaviour
     }
 
     // Методы для проверки и управления наградами
-    public bool HasPendingReward(string roomName) => roomsWithPendingReward.Contains(roomName);
-    public bool IsRewardCollected(string roomName) => roomsRewardCollected.Contains(roomName);
+    public bool HasPendingReward(string roomName) => runState.RoomsWithPendingReward.Contains(roomName);
+    public bool IsRewardCollected(string roomName) => runState.RoomsRewardCollected.Contains(roomName);
 
     public void MarkRewardAsSpawned(string roomName)
     {
-        if (!roomsRewardCollected.Contains(roomName))
+        if (!runState.RoomsRewardCollected.Contains(roomName))
         {
-            roomsWithPendingReward.Add(roomName);
+            runState.RoomsWithPendingReward.Add(roomName);
         }
     }
 
     public void MarkRewardAsCollected(string roomName)
     {
-        roomsWithPendingReward.Remove(roomName);
-        roomsRewardCollected.Add(roomName);
+        runState.RoomsWithPendingReward.Remove(roomName);
+        runState.RoomsRewardCollected.Add(roomName);
         Debug.Log($"Награда в комнате {roomName} успешно подобрана!");
     }
 
     // НОВЫЕ МЕТОДЫ: Сохранение и получение индекса конкретного предмета в комнате
     public void SaveRoomRewardIndex(string roomName, int index)
     {
-        roomRewardIndices[roomName] = index;
+        runState.RoomRewardIndices[roomName] = index;
     }
 
     public bool TryGetRoomRewardIndex(string roomName, out int index)
     {
-        return roomRewardIndices.TryGetValue(roomName, out index);
+        return runState.RoomRewardIndices.TryGetValue(roomName, out index);
     }
 
     // Срабатывает автоматически при загрузке любой комнаты
@@ -119,7 +105,7 @@ public class RunManager : MonoBehaviour
         }
 
         // 2. Если комната уже зачищена, дополнительно подчищаем оставшиеся объекты
-        if (clearedRooms.Contains(currentRoom))
+        if (runState.ClearedRooms.Contains(currentRoom))
         {
             StartCoroutine(ClearRoomObjectsRoutine());
         }
@@ -141,9 +127,9 @@ public class RunManager : MonoBehaviour
     public void MarkCurrentRoomAsCleared()
     {
         string currentRoom = SceneManager.GetActiveScene().name;
-        if (!clearedRooms.Contains(currentRoom))
+        if (!runState.ClearedRooms.Contains(currentRoom))
         {
-            clearedRooms.Add(currentRoom);
+            runState.ClearedRooms.Add(currentRoom);
             Debug.Log($"Комната {currentRoom} зачищена и сохранена в RunManager!");
         }
     }
@@ -151,7 +137,7 @@ public class RunManager : MonoBehaviour
     public bool IsCurrentRoomCleared()
     {
         string currentRoom = SceneManager.GetActiveScene().name;
-        return clearedRooms.Contains(currentRoom);
+        return runState.ClearedRooms.Contains(currentRoom);
     }
 
     private void GenerateRoute()
@@ -173,15 +159,15 @@ public class RunManager : MonoBehaviour
 
     private void ConnectRooms(string roomA, string roomB)
     {
-        roomConnections[roomA + "|Right"] = roomB;
-        roomConnections[roomB + "|Left"] = roomA;
+        runState.RoomConnections[roomA + "|Right"] = roomB;
+        runState.RoomConnections[roomB + "|Left"] = roomA;
     }
 
     public string GetDestination(string room, string direction)
     {
         string key = room + "|" + direction;
 
-        if (roomConnections.TryGetValue(key, out string destination))
+        if (runState.RoomConnections.TryGetValue(key, out string destination))
         {
             return destination;
         }

@@ -261,7 +261,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::CharacterController
   groundCheck: {fileID: 9039892886109903251}
-  groundCheckRadius: 0.15
+  groundCheckRadius: 0.12
   groundLayer:
     serializedVersion: 2
     m_Bits: 64

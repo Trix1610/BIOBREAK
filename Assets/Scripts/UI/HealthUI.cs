@@ -3,12 +3,21 @@ using TMPro;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 
+public sealed class HealthPresenter
+{
+    public string Format(float currentHealth, float maxHealth)
+    {
+        return $"HP: {currentHealth:0} / {maxHealth:0}";
+    }
+}
+
 public class HealthUI : MonoBehaviour
 {
     [SerializeField] private TMP_Text hpText;
 
     private CharacterStats stats;
     private Coroutine findRoutine;
+    private readonly HealthPresenter presenter = new();
 
     private void Start()
     {
@@ -112,7 +121,7 @@ public class HealthUI : MonoBehaviour
             return;
         }
 
-        hpText.text = $"HP: {currentHealth:0} / {stats.MaxHealth:0}";
+        hpText.text = presenter.Format(currentHealth, stats.MaxHealth);
         Debug.Log($"[HealthUI] Текст на UI успешно обновлен на: {hpText.text}");
     }
 }

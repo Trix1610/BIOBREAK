@@ -3,6 +3,22 @@ using UnityEngine.SceneManagement;
 using UnityEngine.InputSystem;
 using Core;
 
+public sealed class PauseController
+{
+    public bool IsPaused { get; private set; }
+
+    public void Pause()
+    {
+        IsPaused = true;
+        Time.timeScale = 0f;
+    }
+
+    public void Resume()
+    {
+        IsPaused = false;
+        Time.timeScale = 1f;
+    }
+}
 
 public class PauseMenu : MonoBehaviour
 {
@@ -10,7 +26,7 @@ public class PauseMenu : MonoBehaviour
 
     [Header("UI References")]
     [SerializeField] private GameObject pauseMenuPanel;
-    private bool _isPaused = false;
+    private readonly PauseController pauseController = new();
 
     private void Awake()
     {
@@ -37,7 +53,7 @@ public class PauseMenu : MonoBehaviour
         if (Keyboard.current.escapeKey.wasPressedThisFrame)
         {
             Debug.Log("[PauseMenu] Нажата клавиша ESC.");
-            if (_isPaused)
+            if (pauseController.IsPaused)
             {
                 Resume();
             }
@@ -53,8 +69,7 @@ public class PauseMenu : MonoBehaviour
         if (pauseMenuPanel != null)
             pauseMenuPanel.SetActive(false);
             
-        Time.timeScale = 1f;
-        _isPaused = false;
+        pauseController.Resume();
         Debug.Log("[PauseMenu] Игра возобновлена.");
     }
 
@@ -70,8 +85,7 @@ public class PauseMenu : MonoBehaviour
             Debug.LogError("[PauseMenu] Невозможно показать панель: ссылка утеряна!");
         }
             
-        Time.timeScale = 0f;
-        _isPaused = true;
+        pauseController.Pause();
     }
 
     public void OnResumeClicked()

@@ -1,6 +1,6 @@
 using System.Collections;
 using UnityEngine;
-using Weapons; // Добавили пространство имен для Bullet
+using Weapons;
 
 public class Pistol : Weapon
 {
@@ -12,6 +12,8 @@ public class Pistol : Weapon
     private int currentAmmo;
     private bool isReloading;
     private float nextFireTime;
+    private ProjectileFactory projectileFactory;
+    private ProjectilePool projectilePool;
 
     private void Start()
     {
@@ -19,6 +21,11 @@ public class Pistol : Weapon
         {
             currentAmmo = weaponData.maxAmmo;
         }
+
+        projectilePool = bulletPrefab != null
+            ? new ProjectilePool(bulletPrefab)
+            : null;
+        projectileFactory = new ProjectileFactory(bulletPrefab, bulletSpeed, projectilePool);
     }
 
     public override void Attack()
@@ -47,34 +54,9 @@ public class Pistol : Weapon
         currentAmmo--;
         nextFireTime = Time.time + weaponData.fireRate;
 
-        SpawnBullet();
+        projectileFactory.Spawn(firePoint, (int)weaponData.damage);
 
         Debug.Log($"Pistol fired! Ammo: {currentAmmo}/{weaponData.maxAmmo}");
-    }
-
-    private void SpawnBullet()
-    {
-        if (bulletPrefab == null || firePoint == null)
-        {
-            Debug.LogWarning("Pistol: Не назначен BulletPrefab или FirePoint в инспекторе!");
-            return;
-        }
-
-        GameObject bullet = Instantiate(bulletPrefab, firePoint.position, firePoint.rotation);
-
-        // Передаем урон пуле (с явным приведением к int, если damage это float)
-        Bullet bulletScript = bullet.GetComponent<Bullet>();
-        if (bulletScript != null)
-        {
-            int pistolDamage = weaponData != null ? (int)weaponData.damage : 20; 
-            bulletScript.SetDamage(pistolDamage);
-        }
-
-        Rigidbody2D rb = bullet.GetComponent<Rigidbody2D>();
-        if (rb != null)
-        {
-            rb.linearVelocity = firePoint.right * bulletSpeed;
-        }
     }
 
     public override void Reload()
