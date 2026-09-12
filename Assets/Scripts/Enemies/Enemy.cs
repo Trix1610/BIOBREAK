@@ -40,165 +40,53 @@ namespace Enemies
         [Header("Visual Effects")]
         [SerializeField] private SpriteRenderer spriteRenderer; 
         [SerializeField] private float flashDuration = 0.15f;     
-        
-        private int _currentHealth;
-        private bool _isDead;
-        private float _targetFillAmount;
-        private Color _originalColor;
-        private Coroutine _flashCoroutine;
 
+        private EnemyAI _ai;
+        private EnemyHealth _health;
+        private EnemyDeathAnimation _deathAnimation;
         private Transform _playerTransform;
         private Rigidbody2D _rb;
-        private bool _isGrounded;
-        
-        private int _currentMoveDirection = 1; 
-        private bool _platformAbove;
-
-        private bool _wasUnderPlatform;
-        private bool _isWalkingPastEdge;
-        private float _edgePositionX;
-        private int _exitDirection = 1;
-        private float _nextJumpTime;
+        private Collider2D _collider;
 
         private void Awake()
         {
             if (RunManager.Instance != null && RunManager.Instance.IsCurrentRoomCleared())
                 Destroy(gameObject);
-        }
 
-        private void Start()
-        {
-            _currentHealth = maxHealth;
-            _targetFillAmount = 1f;
             _rb = GetComponent<Rigidbody2D>();
+            _collider = GetComponent<Collider2D>();
 
             if (spriteRenderer == null)
                 spriteRenderer = GetComponent<SpriteRenderer>();
 
-            if (spriteRenderer != null)
-                _originalColor = spriteRenderer.color;
-
             GameObject player = GameObject.FindGameObjectWithTag("Player");
             if (player != null) _playerTransform = player.transform;
 
-            if (healthCanvasObject != null)
-                healthCanvasObject.SetActive(false);
+            var movementConfig = new EnemyMovementConfig(speed, jumpForce, extraStepAfterEdge);
+            var jumpConfig = new EnemyJumpConfig(maxJumpDistanceX, minJumpHeight, jumpCooldown);
+            var raycastConfig = new EnemyRaycastConfig(groundCheck, groundCheckRadius, groundLayer, platformCheck, platformCheckDistance, diagCheckPoint, diagCheckDistance);
+            var healthConfig = new EnemyHealthConfig(maxHealth, healthFillImage, healthCanvasObject, healthLerpSpeed, spriteRenderer, flashDuration, _rb, transform);
+            var deathConfig = new EnemyDeathConfig(transform, spriteRenderer, healthCanvasObject, _rb, _collider);
 
-            if (healthFillImage != null)
-                healthFillImage.fillAmount = 1f;
+            _ai = new EnemyAI(transform, _rb, _playerTransform, movementConfig, jumpConfig, raycastConfig);
+            _health = new EnemyHealth(healthConfig);
+            _deathAnimation = new EnemyDeathAnimation(deathConfig);
+        }
+
+        private void Start()
+        {
+            _health.Initialize();
         }
 
         private void Update()
         {
-            if (healthFillImage != null && healthFillImage.canvas != null)
-            {
-                healthFillImage.fillAmount = Mathf.Lerp(healthFillImage.fillAmount, _targetFillAmount, Time.deltaTime * healthLerpSpeed);
-
-                Transform canvasTransform = healthFillImage.canvas.transform;
-                Vector3 canvasScale = canvasTransform.localScale;
-                canvasScale.x = Mathf.Abs(canvasScale.x) * Mathf.Sign(transform.localScale.x);
-                canvasTransform.localScale = canvasScale;
-            }
-
-            if (_playerTransform == null) return;
-
-            _isGrounded = groundCheck != null && 
-                         Physics2D.OverlapCircle(groundCheck.position, groundCheckRadius, groundLayer);
-
-            _platformAbove = platformCheck != null && 
-                             Physics2D.Raycast(platformCheck.position, Vector2.up, platformCheckDistance, groundLayer).collider != null;
-
-            if (!_isGrounded) return;
-
-            bool playerIsHigher = _playerTransform.position.y > transform.position.y + 0.3f;
-            float distToPlayerX = Mathf.Abs(_playerTransform.position.x - transform.position.x);
-            float dirToPlayerX = Mathf.Sign(_playerTransform.position.x - transform.position.x);
-            bool shouldConsiderJump =
-                _playerTransform.position.y - transform.position.y >= minJumpHeight &&
-                distToPlayerX <= maxJumpDistanceX &&
-                Time.time >= _nextJumpTime;
-
-            if (_platformAbove)
-            {
-                _wasUnderPlatform = true;
-                _isWalkingPastEdge = false;
-            }
-            else if (_wasUnderPlatform && !_isWalkingPastEdge)
-            {
-                _isWalkingPastEdge = true;
-                _edgePositionX = transform.position.x;
-                _exitDirection = _currentMoveDirection;
-            }
-
-            if (_isWalkingPastEdge)
-            {
-                if (Mathf.Abs(transform.position.x - _edgePositionX) >= extraStepAfterEdge)
-                {
-                    if (shouldConsiderJump)
-                        TryJump(dirToPlayerX);
-
-                    _isWalkingPastEdge = false;
-                    _wasUnderPlatform = false;
-                }
-            }
-            else if (!_platformAbove && shouldConsiderJump)
-            {
-                Vector2 origin = diagCheckPoint != null ? (Vector2)diagCheckPoint.position : (Vector2)transform.position;
-                Vector2 rayDir = new Vector2(dirToPlayerX, 1.0f).normalized;
-                
-                Debug.DrawRay(origin, rayDir * diagCheckDistance, Color.red);
-
-                if (Physics2D.Raycast(origin, rayDir, diagCheckDistance, groundLayer).collider != null)
-                {
-                    TryJump(dirToPlayerX);
-                }
-            }
+            _ai.Update();
+            _health.Update();
         }
 
         private void FixedUpdate()
         {
-            if (_playerTransform == null) return;
-
-            float directionX;
-
-            if (_platformAbove)
-            {
-                directionX = _currentMoveDirection;
-            }
-            else if (_isWalkingPastEdge)
-            {
-                directionX = _exitDirection;
-            }
-            else
-            {
-                float distToPlayerX = _playerTransform.position.x - transform.position.x;
-                if (Mathf.Abs(distToPlayerX) > 0.2f)
-                    _currentMoveDirection = (int)Mathf.Sign(distToPlayerX);
-                
-                directionX = _currentMoveDirection;
-            }
-
-            _rb.linearVelocity = new Vector2(directionX * speed, _rb.linearVelocity.y);
-
-            if (directionX != 0)
-                transform.localScale = new Vector3(Mathf.Abs(transform.localScale.x) * Mathf.Sign(directionX), transform.localScale.y, transform.localScale.z);
-        }
-
-        private void Jump(float dirX)
-        {
-            _rb.linearVelocity = new Vector2(dirX * (speed * 0.6f), jumpForce);
-            _isWalkingPastEdge = false;
-            _wasUnderPlatform = false;
-        }
-
-        private bool TryJump(float dirX)
-        {
-            if (Time.time < _nextJumpTime || !_isGrounded)
-                return false;
-
-            _nextJumpTime = Time.time + jumpCooldown;
-            Jump(dirX);
-            return true;
+            _ai.FixedUpdate();
         }
 
         private void OnCollisionEnter2D(Collision2D collision)
@@ -212,7 +100,7 @@ namespace Enemies
             DamageSystem.Apply(damageable, damageAmount);
         }
 
-        public float CurrentHealth => _currentHealth;
+        public float CurrentHealth => _health.CurrentHealth;
 
         void IDamageable.TakeDamage(float damage)
         {
@@ -221,89 +109,23 @@ namespace Enemies
 
         public void TakeDamage(int damage)
         {
-            if (_isDead || damage <= 0)
-                return;
+            _health.TakeDamage(damage, _playerTransform);
 
-            _currentHealth -= damage;
-            
-            if (healthCanvasObject != null && !healthCanvasObject.activeSelf)
+            if (_health.IsDead)
             {
-                healthCanvasObject.SetActive(true);
-            }
-
-            _targetFillAmount = Mathf.Clamp01((float)_currentHealth / maxHealth);
-
-            // КОНТРОЛИРУЕМЫЙ ОТСКОК: гасим дикий вертикальный импульс снизу и даем аккуратный толчок вбок
-            if (_rb != null && _playerTransform != null)
-            {
-                float hitDirectionX = Mathf.Sign(transform.position.x - _playerTransform.position.x);
-                if (hitDirectionX == 0) hitDirectionX = 1f;
-
-                float controlledY = Mathf.Min(_rb.linearVelocity.y, 0.5f);
-                _rb.linearVelocity = new Vector2(hitDirectionX * 2.5f, controlledY);
-            }
-
-            if (spriteRenderer != null)
-            {
-                if (_flashCoroutine != null) StopCoroutine(_flashCoroutine);
-                _flashCoroutine = StartCoroutine(FlashWhiteRoutine());
-            }
-
-            if (_currentHealth <= 0)
-            {
-                _isDead = true;
                 Die();
             }
         }
 
-        private IEnumerator FlashWhiteRoutine()
-        {
-            spriteRenderer.color = Color.white;
-            yield return new WaitForSeconds(flashDuration);
-            spriteRenderer.color = _originalColor;
-        }
-
         private void Die()
         {
-            var collider = GetComponent<Collider2D>();
-            if (collider != null) collider.enabled = false;
-            
-            if (_rb != null) 
-            {
-                _rb.linearVelocity = Vector2.zero;
-                _rb.simulated = false;
-            }
-
             enabled = false;
-
             StartCoroutine(DeathAnimationRoutine());
         }
 
         private IEnumerator DeathAnimationRoutine()
         {
-            float duration = 0.25f;
-            float elapsed = 0f;
-            Vector3 initialScale = transform.localScale;
-
-            if (healthCanvasObject != null)
-                healthCanvasObject.SetActive(false);
-
-            while (elapsed < duration)
-            {
-                elapsed += Time.deltaTime;
-                float t = elapsed / duration;
-
-                transform.localScale = Vector3.Lerp(initialScale, Vector3.zero, t);
-
-                if (spriteRenderer != null)
-                {
-                    Color color = spriteRenderer.color;
-                    color.a = Mathf.Lerp(1f, 0f, t);
-                    spriteRenderer.color = color;
-                }
-
-                yield return null;
-            }
+            yield return _deathAnimation.PlayDeathAnimation();
 
             GameManager.Instance?.NotifyEnemyDefeated();
             Destroy(gameObject);
@@ -311,11 +133,7 @@ namespace Enemies
 
         private void OnEnable()
         {
-            _currentHealth = maxHealth;
-            _isDead = false;
-            _targetFillAmount = 1f;
-            if (healthCanvasObject != null)
-                healthCanvasObject.SetActive(false);
+            _health.Initialize();
         }
     }
 }

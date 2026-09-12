@@ -18,6 +18,7 @@ namespace Room
 
         private bool _isUsed;
         private bool _isGateOpened = false;
+        private bool _isClosing = false;
 
         private IEnumerator Start()
         {
@@ -104,6 +105,10 @@ namespace Room
 
         public void CloseGateSmooth()
         {
+            if (_isClosing)
+                return;
+
+            _isClosing = true;
             _isGateOpened = false;
 
             if (gateCollider != null) 
@@ -118,6 +123,7 @@ namespace Room
         private void OpenGateInstant()
         {
             _isGateOpened = true;
+            _isClosing = false;
 
             if (gateCollider != null) 
                 gateCollider.enabled = false;
@@ -132,6 +138,7 @@ namespace Room
         private void OpenGateSmooth()
         {
             _isGateOpened = true;
+            _isClosing = false;
 
             if (gateCollider != null)
             {

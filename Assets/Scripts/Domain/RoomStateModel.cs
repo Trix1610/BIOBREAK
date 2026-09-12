@@ -2,7 +2,7 @@ using System.Collections.Generic;
 
 namespace Core
 {
-    public sealed class RunState
+    public sealed class RunState : IRunState
     {
         public Dictionary<string, string> RoomConnections { get; } = new();
         public HashSet<string> ClearedRooms { get; } = new();
@@ -17,6 +17,16 @@ namespace Core
             RoomsWithPendingReward.Clear();
             RoomsRewardCollected.Clear();
             RoomRewardIndices.Clear();
+        }
+
+        public bool TryGetRoomRewardIndex(string roomName, out int index)
+        {
+            return RoomRewardIndices.TryGetValue(roomName, out index);
+        }
+
+        public void SaveRoomRewardIndex(string roomName, int index)
+        {
+            RoomRewardIndices[roomName] = index;
         }
     }
 

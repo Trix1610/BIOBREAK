@@ -1,4 +1,5 @@
 using UnityEngine;
+using Core;
 
 namespace Room
 {
@@ -6,11 +7,13 @@ namespace Room
     {
         private readonly GameObject[] rewardPrefabs;
         private readonly float rewardHeightOffset;
+        private readonly IRunState runState;
 
         public RoomRewardService(GameObject[] rewardPrefabs, float rewardHeightOffset)
         {
             this.rewardPrefabs = rewardPrefabs;
             this.rewardHeightOffset = rewardHeightOffset;
+            this.runState = ServiceLocator.Get<IRunState>();
         }
 
         public void SpawnForRoom(string roomName)
@@ -32,14 +35,13 @@ namespace Room
 
         private int GetRewardIndex(string roomName)
         {
-            if (RunManager.Instance != null &&
-                RunManager.Instance.TryGetRoomRewardIndex(roomName, out int savedIndex))
+            if (runState != null && runState.TryGetRoomRewardIndex(roomName, out int savedIndex))
             {
                 return Mathf.Clamp(savedIndex, 0, rewardPrefabs.Length - 1);
             }
 
             int generatedIndex = Random.Range(0, rewardPrefabs.Length);
-            RunManager.Instance?.SaveRoomRewardIndex(roomName, generatedIndex);
+            runState?.SaveRoomRewardIndex(roomName, generatedIndex);
             return generatedIndex;
         }
 

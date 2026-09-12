@@ -1,6 +1,7 @@
 using UnityEngine;
 using UnityEngine.SceneManagement;
 using UnityEngine.InputSystem;
+using UnityEngine.UI;
 using Core;
 
 public sealed class PauseController
@@ -26,7 +27,16 @@ public class PauseMenu : MonoBehaviour
 
     [Header("UI References")]
     [SerializeField] private GameObject pauseMenuPanel;
+    [SerializeField] private Button resumeButton;
+    [SerializeField] private Button settingsButton;
+    [SerializeField] private Button mainMenuButton;
+
     private readonly PauseController pauseController = new();
+    private Button[] menuButtons;
+    private int selectedIndex = 0;
+    
+    // Флаг, чтобы понимать, что мы ушли в подменю (настройки) и игра должна оставаться на паузе
+    public bool IsInSubMenu { get; set; } = false;
 
     private void Awake()
     {
@@ -45,10 +55,50 @@ public class PauseMenu : MonoBehaviour
             Instance = null;
     }
 
-    
+    private void Start()
+    {
+        var buttons = new System.Collections.Generic.List<Button>();
+        
+        if (resumeButton != null)
+        {
+            buttons.Add(resumeButton);
+            resumeButton.onClick.AddListener(OnResumeClicked);
+            AddButtonHighlight(resumeButton);
+        }
+
+        if (settingsButton != null)
+        {
+            buttons.Add(settingsButton);
+            settingsButton.onClick.AddListener(OnSettingsClicked);
+            AddButtonHighlight(settingsButton);
+        }
+
+        if (mainMenuButton != null)
+        {
+            buttons.Add(mainMenuButton);
+            mainMenuButton.onClick.AddListener(OnMainMenuClicked);
+            AddButtonHighlight(mainMenuButton);
+        }
+
+        menuButtons = buttons.ToArray();
+    }
+
+    private void AddButtonHighlight(Button button)
+    {
+        ColorBlock colors = button.colors;
+        Color highlightColor = new Color(1f, 0.8f, 0f);
+        
+        colors.highlightedColor = highlightColor;
+        colors.pressedColor = new Color(0.8f, 0.6f, 0f);
+        button.colors = colors;
+    }
+
     private void Update()
     {
         if (Keyboard.current == null) return;
+
+        // Если открыты настройки, паузу по ESC обрабатывает само меню настроек
+        if (IsInSubMenu) return;
 
         if (Keyboard.current.escapeKey.wasPressedThisFrame)
         {
@@ -60,6 +110,47 @@ public class PauseMenu : MonoBehaviour
             else
             {
                 Pause();
+            }
+        }
+
+        if (!pauseController.IsPaused) return;
+
+        if (Keyboard.current.upArrowKey.wasPressedThisFrame)
+        {
+            selectedIndex--;
+            if (selectedIndex < 0) selectedIndex = menuButtons.Length - 1;
+            SelectButton(selectedIndex);
+        }
+
+        if (Keyboard.current.downArrowKey.wasPressedThisFrame)
+        {
+            selectedIndex++;
+            if (selectedIndex >= menuButtons.Length) selectedIndex = 0;
+            SelectButton(selectedIndex);
+        }
+
+        if (Keyboard.current.enterKey.wasPressedThisFrame || Keyboard.current.spaceKey.wasPressedThisFrame)
+        {
+            menuButtons[selectedIndex]?.onClick.Invoke();
+        }
+    }
+
+    private void SelectButton(int index)
+    {
+        for (int i = 0; i < menuButtons.Length; i++)
+        {
+            if (menuButtons[i] != null)
+            {
+                ColorBlock colors = menuButtons[i].colors;
+                if (i == index)
+                {
+                    colors.normalColor = new Color(1f, 0.8f, 0f);
+                }
+                else
+                {
+                    colors.normalColor = Color.white;
+                }
+                menuButtons[i].colors = colors;
             }
         }
     }
@@ -78,6 +169,7 @@ public class PauseMenu : MonoBehaviour
         if (pauseMenuPanel != null)
         {
             pauseMenuPanel.SetActive(true);
+            SelectButton(0);
             Debug.Log("[PauseMenu] Панель паузы активирована.");
         }
         else
@@ -94,16 +186,38 @@ public class PauseMenu : MonoBehaviour
         Resume();
     }
 
+    public void OnSettingsClicked()
+    {
+        Debug.Log("[PauseMenu] Нажата кнопка 'Настройки'.");
+
+        if (SettingsMenu.Instance != null)
+        {
+            // Устанавливаем флаг, что мы ушли в подменю, чтобы игра не снималась с паузы
+            IsInSubMenu = true;
+
+            // Передаем панель паузы в меню настроек
+            SettingsMenu.Instance.Open(pauseMenuPanel);
+        }
+        else
+        {
+            Debug.LogError("[PauseMenu] Экземпляр SettingsMenu не найден на сцене!");
+        }
+    }
+
+    // Метод, который SettingsMenu сможет вызвать при закрытии настроек, чтобы вернуть управление паузе
+    public void OnCloseSettings()
+    {
+        IsInSubMenu = false;
+    }
+
     public void OnMainMenuClicked()
     {
         Time.timeScale = 1f;
-        // 1. Получаем фиктивную сцену DontDestroyOnLoad через один из объектов
         GameObject dummy = new GameObject("Temp");
         Object.DontDestroyOnLoad(dummy);
         Scene ddolScene = dummy.scene;
-        Destroy(dummy); // Удаляем временный объект
+        Destroy(dummy);
 
-        // 2. Достаем все корневые объекты из этой сцены и уничтожаем их
         GameObject[] rootObjects = ddolScene.GetRootGameObjects();
         foreach (GameObject obj in rootObjects)
         {

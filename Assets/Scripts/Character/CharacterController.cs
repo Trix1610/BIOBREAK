@@ -2,6 +2,7 @@ using UnityEngine;
 using UnityEngine.InputSystem;
 using UnityEngine.SceneManagement;
 using Core;
+using Character;
 
 public class CharacterController : MonoBehaviour
 {
@@ -18,12 +19,13 @@ public class CharacterController : MonoBehaviour
     public CharacterStats Stats { get; private set; }
     public Weapon CurrentWeapon => currentWeapon;
     public Vector2 MoveInput { get; private set; }
-    public bool IsGrounded { get; private set; }
+    public bool IsGrounded => _groundCheck.IsGrounded;
     public int CurrentJumps { get; set; }
 
-    private bool wasGrounded;
     private bool _isInputLocked = false;
     private WeaponController weaponController;
+    private CharacterGroundCheck _groundCheck;
+    private CharacterMovement _movement;
 
     private void Awake()
     {
@@ -37,6 +39,19 @@ public class CharacterController : MonoBehaviour
         }
 
         weaponController = new WeaponController(currentWeapon);
+
+        // Регистрируем игрока в PlayerReference
+        if (PlayerReference.Instance != null)
+        {
+            PlayerReference.Instance.SetPlayer(gameObject);
+        }
+
+        // Создаем компоненты
+        var groundCheckConfig = new CharacterGroundCheckConfig(groundCheck, groundCheckRadius, groundLayer);
+        var movementConfig = new CharacterMovementConfig(Rigidbody, Stats);
+
+        _groundCheck = new CharacterGroundCheck(groundCheckConfig);
+        _movement = new CharacterMovement(movementConfig, _groundCheck);
     }
 
     private void OnEnable()
@@ -83,42 +98,15 @@ public class CharacterController : MonoBehaviour
 
     private void Update()
     {
-        CheckGrounded();
+        _groundCheck.Update();
+        CurrentJumps = _groundCheck.CheckLanding(CurrentJumps, Stats.MaxJumps);
+        _movement.HandleJumpRelease();
         StateMachine.Update();
-
-        // Если игрок отпустил пробел во время полета вверх
-        if (Keyboard.current != null && Keyboard.current.spaceKey.wasReleasedThisFrame)
-        {
-            if (Rigidbody.linearVelocity.y > 0)
-            {
-                Rigidbody.linearVelocity = new Vector2(
-                    Rigidbody.linearVelocity.x,
-                    Rigidbody.linearVelocity.y * 0.5f
-                );
-            }
-        }
     }
 
     private void FixedUpdate()
     {
         StateMachine.FixedUpdate();
-    }
-
-    private void CheckGrounded()
-    {
-        IsGrounded = groundCheck != null &&
-                     Physics2D.OverlapCircle(
-                         groundCheck.position,
-                         groundCheckRadius,
-                         groundLayer
-                     );
-
-        if (IsGrounded && !wasGrounded)
-        {
-            CurrentJumps = Stats.MaxJumps;
-        }
-
-        wasGrounded = IsGrounded;
     }
 
     public void OnMove(InputValue value)
@@ -133,14 +121,7 @@ public class CharacterController : MonoBehaviour
         if (!value.isPressed)
             return;
 
-        bool isGrounded = groundCheck != null &&
-                          Physics2D.OverlapCircle(
-                              groundCheck.position,
-                              groundCheckRadius,
-                              groundLayer
-                          );
-
-        bool canJump = (isGrounded && Stats.MaxJumps > 0) || CurrentJumps > 0;
+        bool canJump = _movement.CanJump(CurrentJumps, Stats.MaxJumps);
 
         if (canJump)
         {
@@ -161,28 +142,17 @@ public class CharacterController : MonoBehaviour
 
     public void HandleMovement()
     {
-        float targetX = _isInputLocked ? 0f : MoveInput.x * Stats.MoveSpeed;
-
-        Rigidbody.linearVelocity = new Vector2(
-            targetX,
-            Rigidbody.linearVelocity.y
-        );
+        _movement.HandleMovement(MoveInput, _isInputLocked);
     }
 
     public void StopHorizontalMovement()
     {
-        Rigidbody.linearVelocity = new Vector2(
-            0,
-            Rigidbody.linearVelocity.y
-        );
+        _movement.StopHorizontalMovement();
     }
 
     public void HandleJump()
     {
-        Rigidbody.linearVelocity = new Vector2(
-            Rigidbody.linearVelocity.x,
-            Stats.JumpForce
-        );
+        _movement.HandleJump();
     }
 
     public void TakeDamage(int damage)

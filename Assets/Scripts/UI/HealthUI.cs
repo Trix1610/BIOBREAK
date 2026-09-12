@@ -2,6 +2,7 @@ using System.Collections;
 using TMPro;
 using UnityEngine;
 using UnityEngine.SceneManagement;
+using Core;
 
 public sealed class HealthPresenter
 {
@@ -51,7 +52,6 @@ public class HealthUI : MonoBehaviour
         SceneManager.sceneLoaded -= OnSceneLoaded;
         Unsubscribe();
 
-        // Останавливаем корутину, если объект выключился
         if (findRoutine != null)
         {
             StopCoroutine(findRoutine);
@@ -69,17 +69,15 @@ public class HealthUI : MonoBehaviour
     {
         GameObject player = null;
 
-        // Цикл будет крутиться, пока игрок или его компонент не появятся
         while (player == null || stats == null)
         {
-            player = GameObject.FindGameObjectWithTag("Player");
+            player = PlayerReference.Instance?.Player;
 
             if (player != null)
             {
                 stats = player.GetComponent<CharacterStats>();
             }
 
-            // Если кто-то из них все еще не найден, ждем 0.2 секунды и повторяем
             if (player == null || stats == null)
             {
                 yield return new WaitForSeconds(0.2f);

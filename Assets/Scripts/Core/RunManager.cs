@@ -32,6 +32,8 @@ public class RunManager : MonoBehaviour
         Instance = this;
         DontDestroyOnLoad(gameObject);
 
+        ServiceLocator.Register<IRunState>(runState);
+
         StartNewRun();
     }
 
