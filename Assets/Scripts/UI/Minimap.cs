@@ -13,9 +13,14 @@ public class Minimap : MaskableGraphic
     [SerializeField] private Color lineColor = new Color(0.8f, 0.8f, 0.8f, 0.6f);
     [SerializeField] private float lineWidth = 4.0f;
 
+    [Header("Border Settings")]
+    [SerializeField] private Color borderColor = new Color(1f, 1f, 1f, 0.9f);
+    [SerializeField] private float borderWidth = 1.5f;
+
     [Header("Colors")]
     [SerializeField] private Color currentColor = new Color(0.2f, 0.9f, 0.3f, 0.9f);
     [SerializeField] private Color visitedColor = new Color(0.4f, 0.4f, 0.45f, 0.8f);
+    [SerializeField] private Color undiscoveredColor = new Color(0.2f, 0.2f, 0.25f, 0.4f);
 
     private Dictionary<string, Vector2Int> roomGridPositions = new Dictionary<string, Vector2Int>();
     private string lastSceneName = "";
@@ -30,45 +35,44 @@ public class Minimap : MaskableGraphic
     {
         string currentScene = SceneManager.GetActiveScene().name;
 
-        // Игнорируем техническую сцену контейнера
         if (currentScene == SceneNames.Game)
-            return;
-
-        if (currentScene == lastSceneName)
             return;
 
         if (currentScene != lastSceneName && !string.IsNullOrEmpty(lastSceneName) && lastSceneName != SceneNames.Game)
         {
-            if (!roomGridPositions.ContainsKey(currentScene))
-            {
-                Vector2Int previousPos = roomGridPositions.ContainsKey(lastSceneName) 
-                    ? roomGridPositions[lastSceneName] 
-                    : Vector2Int.zero;
-
-                Vector2Int newPos = previousPos + new Vector2Int(1, 0); // По умолчанию вправо
-
-                if (RunManager.Instance != null)
-                {
-                    // Безопасно проверяем направления через метод-обертку ниже, который не спамит ошибки в консоль
-                    if (GetSafeDestination(lastSceneName, "Right") == currentScene)
-                    {
-                        newPos = previousPos + new Vector2Int(1, 0);
-                    }
-                    else if (GetSafeDestination(lastSceneName, "Left") == currentScene)
-                    {
-                        newPos = previousPos + new Vector2Int(-1, 0);
-                    }
-                }
-
-                roomGridPositions[currentScene] = newPos;
-            }
+            RegisterRoomPosition(currentScene, lastSceneName);
         }
 
         lastSceneName = currentScene;
         SetVerticesDirty();
     }
 
-    // Вспомогательный метод, который проверяет связь без красных логов в консоли
+    private void RegisterRoomPosition(string currentScene, string prevScene)
+    {
+        if (roomGridPositions.ContainsKey(currentScene))
+            return;
+
+        Vector2Int previousPos = roomGridPositions.ContainsKey(prevScene) 
+            ? roomGridPositions[prevScene] 
+            : Vector2Int.zero;
+
+        Vector2Int newPos = previousPos + new Vector2Int(1, 0);
+
+        if (RunManager.Instance != null)
+        {
+            if (GetSafeDestination(prevScene, "Right") == currentScene)
+            {
+                newPos = previousPos + new Vector2Int(1, 0);
+            }
+            else if (GetSafeDestination(prevScene, "Left") == currentScene)
+            {
+                newPos = previousPos + new Vector2Int(-1, 0);
+            }
+        }
+
+        roomGridPositions[currentScene] = newPos;
+    }
+
     private string GetSafeDestination(string room, string direction)
     {
         return RunManager.Instance?.GetDestination(room, direction);
@@ -83,22 +87,32 @@ public class Minimap : MaskableGraphic
 
         Vector2 centerOffset = rectTransform.rect.center;
         string currentScene = SceneManager.GetActiveScene().name;
+        if (currentScene == SceneNames.Game) currentScene = lastSceneName;
 
-        if (currentScene != SceneNames.Game && !roomGridPositions.ContainsKey(currentScene))
+        if (!roomGridPositions.ContainsKey(currentScene))
         {
             roomGridPositions[currentScene] = Vector2Int.zero;
         }
 
-        // ШАГ 1: Рисуем линии между соседними на сетке комнатами (без вызовов GetDestination)
-        var visitedList = new List<KeyValuePair<string, Vector2Int>>(roomGridPositions);
-        for (int i = 0; i < visitedList.Count; i++)
-        {
-            for (int j = i + 1; j < visitedList.Count; j++)
-            {
-                Vector2Int posA = visitedList[i].Value;
-                Vector2Int posB = visitedList[j].Value;
+        Dictionary<string, Vector2Int> renderMap = new Dictionary<string, Vector2Int>(roomGridPositions);
 
-                // Если комнаты находятся вплотную друг к другу (расстояние ровно 1 шаг), соединяем их линией
+        List<string> knownRooms = new List<string>(roomGridPositions.Keys);
+        foreach (var room in knownRooms)
+        {
+            Vector2Int pos = roomGridPositions[room];
+            CheckAndAddNeighbor(room, pos, "Right", new Vector2Int(1, 0), renderMap);
+            CheckAndAddNeighbor(room, pos, "Left", new Vector2Int(-1, 0), renderMap);
+        }
+
+        // ШАГ 1: Рисуем линии между известными узлами
+        var renderList = new List<KeyValuePair<string, Vector2Int>>(renderMap);
+        for (int i = 0; i < renderList.Count; i++)
+        {
+            for (int j = i + 1; j < renderList.Count; j++)
+            {
+                Vector2Int posA = renderList[i].Value;
+                Vector2Int posB = renderList[j].Value;
+
                 if (Mathf.Abs(posA.x - posB.x) + Mathf.Abs(posA.y - posB.y) == 1)
                 {
                     Vector2 canvasA = GetCanvasPosition(posA, centerOffset);
@@ -108,16 +122,46 @@ public class Minimap : MaskableGraphic
             }
         }
 
-        // ШАГ 2: Поверх линий рисуем квадраты комнат
-        foreach (var pair in roomGridPositions)
+        // ШАГ 2: Рисуем квадраты комнат
+        foreach (var pair in renderMap)
         {
             string roomName = pair.Key;
             Vector2Int gridPos = pair.Value;
-
             Vector2 drawPos = GetCanvasPosition(gridPos, centerOffset);
-            Color roomColor = (roomName == currentScene) ? currentColor : visitedColor;
+
+            Color roomColor;
+            if (roomName == currentScene)
+            {
+                roomColor = currentColor;
+            }
+            else if (roomGridPositions.ContainsKey(roomName))
+            {
+                roomColor = visitedColor;
+            }
+            else
+            {
+                roomColor = undiscoveredColor;
+            }
 
             DrawRect(vh, drawPos, cellSize, roomColor);
+
+            // Тонкая рамка вокруг квадрата (если задана ширина > 0)
+            if (borderWidth > 0f)
+            {
+                DrawRectBorder(vh, drawPos, cellSize, borderWidth, borderColor);
+            }
+        }
+    }
+
+    private void CheckAndAddNeighbor(string room, Vector2Int basePos, string direction, Vector2Int offset, Dictionary<string, Vector2Int> targetMap)
+    {
+        string destRoom = GetSafeDestination(room, direction);
+        if (!string.IsNullOrEmpty(destRoom))
+        {
+            if (!targetMap.ContainsKey(destRoom))
+            {
+                targetMap[destRoom] = basePos + offset;
+            }
         }
     }
 
@@ -132,7 +176,6 @@ public class Minimap : MaskableGraphic
     private void DrawRect(VertexHelper vh, Vector2 center, Vector2 size, Color color)
     {
         int startIndex = vh.currentVertCount;
-
         Vector2 min = center - size / 2f;
         Vector2 max = center + size / 2f;
 
@@ -145,11 +188,25 @@ public class Minimap : MaskableGraphic
         vh.AddTriangle(startIndex, startIndex + 2, startIndex + 3);
     }
 
+    private void DrawRectBorder(VertexHelper vh, Vector2 center, Vector2 size, float bWidth, Color color)
+    {
+        Vector2 min = center - size / 2f;
+        Vector2 max = center + size / 2f;
+
+        // Верхняя сторона
+        DrawLine(vh, new Vector2(min.x, max.y), new Vector2(max.x, max.y), bWidth, color);
+        // Нижняя сторона
+        DrawLine(vh, new Vector2(min.x, min.y), new Vector2(max.x, min.y), bWidth, color);
+        // Левая сторона
+        DrawLine(vh, new Vector2(min.x, min.y), new Vector2(min.x, max.y), bWidth, color);
+        // Правая сторона
+        DrawLine(vh, new Vector2(max.x, min.y), new Vector2(max.x, max.y), bWidth, color);
+    }
+
     private void DrawLine(VertexHelper vh, Vector2 p1, Vector2 p2, float width, Color color)
     {
         Vector2 dir = (p2 - p1).normalized;
         Vector2 perp = new Vector2(-dir.y, dir.x) * (width / 2f);
-
         int startIndex = vh.currentVertCount;
 
         vh.AddVert(new Vector3(p1.x - perp.x, p1.y - perp.y, 0), color, Vector2.zero);

@@ -1,4 +1,5 @@
 using UnityEngine;
+using Core;
 
 public class CharacterSpawner : MonoBehaviour
 {
@@ -37,16 +38,22 @@ public class CharacterSpawner : MonoBehaviour
                 return;
             }
 
-            Instantiate(
+            GameObject newPlayer = Instantiate(
                 playerPrefab,
                 spawnPoint.position,
                 Quaternion.identity
             );
+            
+            PlayerReference.Instance?.SetPlayer(newPlayer);
+            Debug.Log("CharacterSpawner: Игрок заспавнен и добавлен в PlayerReference");
         }
         else
         {
             existingPlayer.transform.position =
                 spawnPoint.position;
+            
+            PlayerReference.Instance?.SetPlayer(existingPlayer);
+            Debug.Log("CharacterSpawner: Существующий игрок перемещен и добавлен в PlayerReference");
         }
 
         CharacterSpawnData.Clear();

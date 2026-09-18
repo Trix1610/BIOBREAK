@@ -17,50 +17,10 @@ namespace Room
         [SerializeField] private float fadeDuration = 0.5f;        // Время исчезновения / появления
 
         private bool _isUsed;
-        private bool _isGateOpened = false;
+        private bool _isGateOpened = true;
         private bool _isClosing = false;
 
-        private IEnumerator Start()
-        {
-            string currentScene = SceneManager.GetActiveScene().name;
-
-            if (currentScene == SceneNames.StartRoom || currentScene == SceneNames.Game)
-            {
-                OpenGateInstant();
-                yield break;
-            }
-
-            if (gateCollider != null)
-                gateCollider.enabled = false;
-
-            // Изначально скрываем ворота, чтобы проиграть красивое появление сверху вниз
-            if (gateImage != null)
-            {
-                gateImage.enabled = false;
-                gateImage.fillAmount = 0f;
-            }
-
-            yield return new WaitForSeconds(0.5f); 
-
-            CheckGateStatusSmooth();
-        }
-
-        private void Update()
-        {
-            if (_isGateOpened)
-                return;
-
-            string currentScene = SceneManager.GetActiveScene().name;
-            if (currentScene == SceneNames.StartRoom || currentScene == SceneNames.Game)
-                return;
-
-            if (GameManager.Instance != null && GameManager.Instance.AreEnemiesCleared())
-            {
-                OpenGateSmooth();
-            }
-        }
-
-        private void CheckGateStatusSmooth()
+        private void Start()
         {
             string currentScene = SceneManager.GetActiveScene().name;
 
@@ -70,28 +30,35 @@ namespace Room
                 return;
             }
 
-            if (GameManager.Instance != null &&
-                !GameManager.Instance.IsRoomActive &&
-                (RunManager.Instance == null || !RunManager.Instance.IsCurrentRoomCleared()))
-            {
-                OpenGateInstant();
-                return;
-            }
-
-            if (GameManager.Instance != null && GameManager.Instance.AreEnemiesCleared())
+            // Если комната уже зачищена в раннере — открыто
+            if (RunManager.Instance != null && RunManager.Instance.IsCurrentRoomCleared())
             {
                 OpenGateInstant();
             }
             else
             {
-                // Если враги не убиты, ворота должны появиться сверху вниз
-                CloseGateSmooth();
+                // По умолчанию при входе ворота ОТКРЫТЫ, пока не сработает RoomTrigger боя
+                OpenGateInstant();
+            }
+        }
+
+        private void Update()
+        {
+            string currentScene = SceneManager.GetActiveScene().name;
+            if (currentScene == SceneNames.StartRoom || currentScene == SceneNames.Game)
+                return;
+
+            if (GameManager.Instance != null && GameManager.Instance.AreEnemiesCleared())
+            {
+                if (!_isGateOpened)
+                    OpenGateSmooth();
             }
         }
 
         private void CloseGateInstant()
         {
             _isGateOpened = false;
+            _isClosing = false;
 
             if (gateCollider != null) 
                 gateCollider.enabled = true;
@@ -105,7 +72,7 @@ namespace Room
 
         public void CloseGateSmooth()
         {
-            if (_isClosing)
+            if (_isClosing || (!_isGateOpened && gateCollider != null && gateCollider.enabled))
                 return;
 
             _isClosing = true;
@@ -117,6 +84,10 @@ namespace Room
             if (gateImage != null) 
             {
                 StartCoroutine(ExpandGateFillRoutine());
+            }
+            else
+            {
+                _isClosing = false;
             }
         }
 
@@ -151,31 +122,34 @@ namespace Room
             }
         }
 
-        // Плавное исчезновение (снизу вверх)
         private IEnumerator ShrinkGateFillRoutine()
         {
             float elapsedTime = 0f;
-            float startFill = gateImage.fillAmount;
+            float startFill = gateImage != null ? gateImage.fillAmount : 1f;
             
             while (elapsedTime < fadeDuration)
             {
                 elapsedTime += Time.deltaTime;
                 float t = elapsedTime / fadeDuration;
-
-                gateImage.fillAmount = Mathf.Lerp(startFill, 0f, t);
-
+                if (gateImage != null)
+                    gateImage.fillAmount = Mathf.Lerp(startFill, 0f, t);
                 yield return null;
             }
 
-            gateImage.enabled = false;
-            gateImage.fillAmount = 1f;
+            if (gateImage != null)
+            {
+                gateImage.enabled = false;
+                gateImage.fillAmount = 0f;
+            }
         }
 
-        // Плавное появление (сверху вниз)
         private IEnumerator ExpandGateFillRoutine()
         {
-            gateImage.enabled = true;
-            gateImage.fillAmount = 0f; // Начинаем с нуля (пусто)
+            if (gateImage != null)
+            {
+                gateImage.enabled = true;
+                gateImage.fillAmount = 0f;
+            }
 
             float elapsedTime = 0f;
             
@@ -183,14 +157,15 @@ namespace Room
             {
                 elapsedTime += Time.deltaTime;
                 float t = elapsedTime / fadeDuration;
-
-                // Заполняем от 0 до 1 (при Vertical + Bottom это визуально растет сверху вниз)
-                gateImage.fillAmount = Mathf.Lerp(0f, 1f, t);
-
+                if (gateImage != null)
+                    gateImage.fillAmount = Mathf.Lerp(0f, 1f, t);
                 yield return null;
             }
 
-            gateImage.fillAmount = 1f;
+            if (gateImage != null)
+                gateImage.fillAmount = 1f;
+
+            _isClosing = false;
         }
 
         private void OnTriggerEnter2D(Collider2D other)
@@ -202,13 +177,11 @@ namespace Room
                 return;
 
             string currentRoom = SceneManager.GetActiveScene().name;
-            if (currentRoom == SceneNames.StartRoom || currentRoom == SceneNames.Game)
-            {
-                OpenGateInstant();
-            }
 
+            // Блокируем ТОЛЬКО если бой реально идет (комната активна через RoomTrigger) и враги не зачищены.
+            // Пока ты не наступил на триггер спавна, IsRoomActive == false, и ты свободно можешь идти назад.
             if (currentRoom != SceneNames.StartRoom && currentRoom != SceneNames.Game &&
-                GameManager.Instance != null && !GameManager.Instance.AreEnemiesCleared())
+                GameManager.Instance != null && GameManager.Instance.IsRoomActive && !GameManager.Instance.AreEnemiesCleared())
             {
                 Debug.Log("Дверь заблокирована! Сначала уничтожьте всех врагов.");
                 return;
@@ -220,9 +193,11 @@ namespace Room
                 return;
             }
 
-            string destinationRoom = RunManager.Instance.GetDestination(currentRoom, direction);
+            string destinationRoom = RunManager.Instance.GetDestination(currentroomOrCurrentScene(currentRoom), direction);
+            // Исправлено обращение к переменной сцены ниже:
+            string destinationRoomActual = RunManager.Instance.GetDestination(currentRoom, direction);
 
-            if (string.IsNullOrEmpty(destinationRoom))
+            if (string.IsNullOrEmpty(destinationRoomActual))
             {
                 Debug.LogError($"RoomExit: destination not found for {currentRoom} -> {direction}");
                 return;
@@ -238,7 +213,9 @@ namespace Room
 
             _isUsed = true;
             CharacterSpawnData.SetSpawn(destinationSpawn);
-            SceneFlowService.LoadWithTransition(destinationRoom);
+            SceneFlowService.LoadWithTransition(destinationRoomActual);
         }
+        
+        private string currentroomOrCurrentScene(string s) => s;
     }
 }

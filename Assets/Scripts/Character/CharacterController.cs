@@ -1,165 +1,166 @@
 using UnityEngine;
 using UnityEngine.InputSystem;
-using UnityEngine.SceneManagement;
-using Core;
-using Character;
 
+[RequireComponent(typeof(Rigidbody2D))]
+[RequireComponent(typeof(Animator))]
+[RequireComponent(typeof(CharacterStats))]
 public class CharacterController : MonoBehaviour
 {
     [Header("Ground Check")]
     [SerializeField] private Transform groundCheck;
-    [SerializeField] private float groundCheckRadius = 0.15f;
+    [SerializeField] private float groundCheckRadius = 0.2f;
     [SerializeField] private LayerMask groundLayer;
 
     [Header("Combat")]
-    [SerializeField] private Weapon currentWeapon;
+    [SerializeField] private Weapon currentWeapon; // Ссылка на текущее оружие
 
-    public StateMachine StateMachine { get; private set; }
-    public Rigidbody2D Rigidbody { get; private set; }
-    public CharacterStats Stats { get; private set; }
-    public Weapon CurrentWeapon => currentWeapon;
-    public Vector2 MoveInput { get; private set; }
-    public bool IsGrounded => _groundCheck.IsGrounded;
-    public int CurrentJumps { get; set; }
+    private Rigidbody2D rb;
+    private Animator animator;
+    private CharacterStats stats;
+    private SpriteRenderer spriteRenderer;
 
-    private bool _isInputLocked = false;
-    private WeaponController weaponController;
-    private CharacterGroundCheck _groundCheck;
-    private CharacterMovement _movement;
+    private Vector2 moveInput;
+    private bool isGrounded;
+
+    // Кэш хэшей параметров Animator
+    private static readonly int SpeedHash = Animator.StringToHash("Speed");
+    private static readonly int IsGroundedHash = Animator.StringToHash("IsGrounded");
+    private static readonly int VerticalVelocityHash = Animator.StringToHash("VerticalVelocity");
 
     private void Awake()
     {
-        Rigidbody = GetComponent<Rigidbody2D>();
-        Stats = GetComponent<CharacterStats>();
-        StateMachine = new StateMachine();
+        rb = GetComponent<Rigidbody2D>();
+        animator = GetComponent<Animator>();
+        stats = GetComponent<CharacterStats>();
+        spriteRenderer = GetComponent<SpriteRenderer>();
 
+        // Если оружие не привязано вручную в Inspector, ищем его на персонаже или его дочерних объектах
         if (currentWeapon == null)
         {
             currentWeapon = GetComponentInChildren<Weapon>();
+            Debug.Log($"CharacterController Awake: currentWeapon найден через GetComponentInChildren: {currentWeapon != null}");
         }
-
-        weaponController = new WeaponController(currentWeapon);
-
-        // Регистрируем игрока в PlayerReference
-        if (PlayerReference.Instance != null)
+        else
         {
-            PlayerReference.Instance.SetPlayer(gameObject);
+            Debug.Log($"CharacterController Awake: currentWeapon уже назначен в Inspector: {currentWeapon.name}");
         }
-
-        // Создаем компоненты
-        var groundCheckConfig = new CharacterGroundCheckConfig(groundCheck, groundCheckRadius, groundLayer);
-        var movementConfig = new CharacterMovementConfig(Rigidbody, Stats);
-
-        _groundCheck = new CharacterGroundCheck(groundCheckConfig);
-        _movement = new CharacterMovement(movementConfig, _groundCheck);
-    }
-
-    private void OnEnable()
-    {
-        SceneManager.sceneLoaded += OnSceneLoaded;
-
-        if (Stats != null)
-            Stats.OnDeath += HandleDeath;
-    }
-
-    private void OnDisable()
-    {
-        SceneManager.sceneLoaded -= OnSceneLoaded;
-
-        if (Stats != null)
-            Stats.OnDeath -= HandleDeath;
-    }
-
-    private void HandleDeath()
-    {
-        StateMachine.ChangeState(new DeathState(this, Stats));
-    }
-
-    private void OnSceneLoaded(Scene scene, LoadSceneMode mode)
-    {
-        if (scene.name == SceneNames.StartRoom || scene.name == SceneNames.Game)
-            return;
-
-        StartCoroutine(LockInputRoutine(0.20f));
-    }
-
-    private System.Collections.IEnumerator LockInputRoutine(float duration)
-    {
-        _isInputLocked = true;
-        yield return new WaitForSeconds(duration);
-        _isInputLocked = false;
-    }
-
-    private void Start()
-    {
-        CurrentJumps = Stats.MaxJumps;
-        StateMachine.ChangeState(new IdleState(this, Stats));
     }
 
     private void Update()
     {
-        _groundCheck.Update();
-        CurrentJumps = _groundCheck.CheckLanding(CurrentJumps, Stats.MaxJumps);
-        _movement.HandleJumpRelease();
-        StateMachine.Update();
+        CheckGround();
+        UpdateAnimator();
+        UpdateSpriteFlip();
     }
 
     private void FixedUpdate()
     {
-        StateMachine.FixedUpdate();
+        Move();
     }
+
+    private void Move()
+    {
+        float speed = stats != null ? stats.MoveSpeed : 7f;
+
+        // Мгновенная остановка по оси X при отсутствии ввода
+        if (Mathf.Abs(moveInput.x) < 0.01f)
+        {
+            rb.linearVelocity = new Vector2(0f, rb.linearVelocity.y);
+        }
+        else
+        {
+            rb.linearVelocity = new Vector2(moveInput.x * speed, rb.linearVelocity.y);
+        }
+
+    }
+
+    private void CheckGround()
+    {
+        if (groundCheck == null) return;
+        isGrounded = Physics2D.OverlapCircle(groundCheck.position, groundCheckRadius, groundLayer);
+    }
+
+    private void UpdateAnimator()
+    {
+        if (animator == null) return;
+
+        float moveSpeedForAnimator = Mathf.Abs(moveInput.x) > 0.01f ? Mathf.Abs(rb.linearVelocity.x) : 0f;
+
+        animator.SetFloat(SpeedHash, moveSpeedForAnimator);
+        animator.SetBool(IsGroundedHash, isGrounded);
+        animator.SetFloat(VerticalVelocityHash, rb.linearVelocity.y);
+    }
+
+    private void UpdateSpriteFlip()
+    {
+        if (spriteRenderer == null) return;
+
+        // Получаем позицию мыши
+        Vector2 mousePosition = Mouse.current.position.ReadValue();
+        Camera mainCamera = Camera.main ?? FindAnyObjectByType<Camera>();
+        
+        if (mainCamera == null) return;
+
+        // Переводим в мировые координаты
+        Vector3 mouseWorldPosition = mainCamera.ScreenToWorldPoint(new Vector3(mousePosition.x, mousePosition.y, 0f));
+        
+        // Переворачиваем спрайт если мышь слева от персонажа
+        bool isMouseOnLeft = mouseWorldPosition.x < transform.position.x;
+        spriteRenderer.flipX = isMouseOnLeft;
+    }
+
+    // ================= INPUT SYSTEM EVENTS =================
 
     public void OnMove(InputValue value)
     {
-        MoveInput = value.Get<Vector2>();
+        moveInput = value.Get<Vector2>();
     }
 
     public void OnJump(InputValue value)
     {
-        if (_isInputLocked) return;
+        if (!value.isPressed) return;
 
-        if (!value.isPressed)
-            return;
-
-        bool canJump = _movement.CanJump(CurrentJumps, Stats.MaxJumps);
-
-        if (canJump)
-        {
-            CurrentJumps--;
-            StateMachine.ChangeState(new JumpState(this, Stats));
-        }
+        float force = stats != null ? stats.JumpForce : 12f;
+        rb.linearVelocity = new Vector2(rb.linearVelocity.x, force);
     }
 
+    // Вызывается автоматически при клике ЛКМ (экшен Attack в Player Input)
     public void OnAttack(InputValue value)
     {
-        if (_isInputLocked) return;
+        Debug.Log($"OnAttack вызван! isPressed: {value.isPressed}");
+        
+        if (!value.isPressed) return;
 
-        if (value.isPressed)
+        Debug.Log($"OnAttack: currentWeapon != null: {currentWeapon != null}");
+        
+        if (currentWeapon != null)
         {
-            weaponController.Attack();
+            Debug.Log($"OnAttack: вызываем Attack() на оружии: {currentWeapon.name}");
+            currentWeapon.Attack();
+        }
+        else
+        {
+            Debug.LogWarning("CurrentWeapon не назначено в CharacterController!");
         }
     }
 
-    public void HandleMovement()
+    // Вызывается при нажатии клавиши перезарядки (экшен Reload в Player Input)
+    public void OnReload(InputValue value)
     {
-        _movement.HandleMovement(MoveInput, _isInputLocked);
-    }
+        if (!value.isPressed) return;
 
-    public void StopHorizontalMovement()
-    {
-        _movement.StopHorizontalMovement();
-    }
-
-    public void HandleJump()
-    {
-        _movement.HandleJump();
-    }
-
-    public void TakeDamage(int damage)
-    {
-        if (Stats != null)
+        if (currentWeapon != null)
         {
-            Stats.TakeDamage(damage);
+            currentWeapon.Reload();
+        }
+    }
+
+    private void OnDrawGizmosSelected()
+    {
+        if (groundCheck != null)
+        {
+            Gizmos.color = Color.red;
+            Gizmos.DrawWireSphere(groundCheck.position, groundCheckRadius);
         }
     }
 }

@@ -128,8 +128,9 @@ public class CharacterStats : MonoBehaviour, IDamageable
         if (currentHealth < 0f)
             currentHealth = 0f;
 
+        Debug.Log($"CharacterStats: получено урона {damage}. Осталось здоровья: {currentHealth}. Подписчиков на OnHealthChanged: {OnHealthChanged?.GetInvocationList().Length ?? 0}");
         OnHealthChanged?.Invoke(currentHealth);
-        Debug.Log($"CharacterStats: получено урона {damage}. Осталось здоровья: {currentHealth}");
+        Debug.Log($"CharacterStats: событие OnHealthChanged вызвано");
 
         if (currentHealth <= 0f)
         {

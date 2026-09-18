@@ -799,6 +799,11 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 252555252}
   m_CullTransparentMesh: 1
+--- !u!4 &265073983 stripped
+Transform:
+  m_CorrespondingSourceObject: {fileID: 4539789432243892520, guid: a74d9a7ccf2582a4389f1ddd5608e409, type: 3}
+  m_PrefabInstance: {fileID: 592707259}
+  m_PrefabAsset: {fileID: 0}
 --- !u!1 &309888989
 GameObject:
   m_ObjectHideFlags: 0
@@ -1371,6 +1376,7 @@ MonoBehaviour:
   rewardPrefabs:
   - {fileID: 3638220506620364316, guid: 3e159b4b27dbc474a989102abdd561f0, type: 3}
   - {fileID: 1909757450109467535, guid: 51cce9ecdde96ea41a85329fa495e50b, type: 3}
+  - {fileID: 1909757450109467535, guid: 5e99a380e11ecd345a7de049b6f742b0, type: 3}
   rewardHeightOffset: 1
 --- !u!4 &548934653
 Transform:
@@ -1384,7 +1390,8 @@ Transform:
   m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
-  m_Children: []
+  m_Children:
+  - {fileID: 265073983}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!114 &548934654
@@ -1411,6 +1418,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: ca9c6b047c6c0b24ab2519567dd4dd3a, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::RunManager
+  roomBackgroundSprite: {fileID: 2180024644975085299, guid: e6b8458929e053e499931a123f01911c, type: 3}
+  platformSprite: {fileID: -5113850848988359095, guid: e61f527b12e011c4e8890276f9adaf2c, type: 3}
 --- !u!1 &574566126
 GameObject:
   m_ObjectHideFlags: 0
@@ -1624,6 +1633,79 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::ScreenTransition
   fadeCanvasGroup: {fileID: 424844114}
   fadeDuration: 0.2
+--- !u!1001 &592707259
+PrefabInstance:
+  m_ObjectHideFlags: 0
+  serializedVersion: 2
+  m_Modification:
+    serializedVersion: 3
+    m_TransformParent: {fileID: 548934653}
+    m_Modifications:
+    - target: {fileID: 213936550224462310, guid: a74d9a7ccf2582a4389f1ddd5608e409, type: 3}
+      propertyPath: m_Size.x
+      value: 52
+      objectReference: {fileID: 0}
+    - target: {fileID: 213936550224462310, guid: a74d9a7ccf2582a4389f1ddd5608e409, type: 3}
+      propertyPath: m_Size.y
+      value: 20
+      objectReference: {fileID: 0}
+    - target: {fileID: 213936550224462310, guid: a74d9a7ccf2582a4389f1ddd5608e409, type: 3}
+      propertyPath: m_DrawMode
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 213936550224462310, guid: a74d9a7ccf2582a4389f1ddd5608e409, type: 3}
+      propertyPath: m_SpriteSortPoint
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 4005744459872120654, guid: a74d9a7ccf2582a4389f1ddd5608e409, type: 3}
+      propertyPath: m_Name
+      value: Gemini_Generated_Image_iuk07wiuk07wiuk0_0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4539789432243892520, guid: a74d9a7ccf2582a4389f1ddd5608e409, type: 3}
+      propertyPath: m_LocalPosition.x
+      value: -0.09
+      objectReference: {fileID: 0}
+    - target: {fileID: 4539789432243892520, guid: a74d9a7ccf2582a4389f1ddd5608e409, type: 3}
+      propertyPath: m_LocalPosition.y
+      value: -0.06
+      objectReference: {fileID: 0}
+    - target: {fileID: 4539789432243892520, guid: a74d9a7ccf2582a4389f1ddd5608e409, type: 3}
+      propertyPath: m_LocalPosition.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4539789432243892520, guid: a74d9a7ccf2582a4389f1ddd5608e409, type: 3}
+      propertyPath: m_LocalRotation.w
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 4539789432243892520, guid: a74d9a7ccf2582a4389f1ddd5608e409, type: 3}
+      propertyPath: m_LocalRotation.x
+      value: -0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4539789432243892520, guid: a74d9a7ccf2582a4389f1ddd5608e409, type: 3}
+      propertyPath: m_LocalRotation.y
+      value: -0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4539789432243892520, guid: a74d9a7ccf2582a4389f1ddd5608e409, type: 3}
+      propertyPath: m_LocalRotation.z
+      value: -0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4539789432243892520, guid: a74d9a7ccf2582a4389f1ddd5608e409, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4539789432243892520, guid: a74d9a7ccf2582a4389f1ddd5608e409, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4539789432243892520, guid: a74d9a7ccf2582a4389f1ddd5608e409, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.z
+      value: 0
+      objectReference: {fileID: 0}
+    m_RemovedComponents: []
+    m_RemovedGameObjects: []
+    m_AddedGameObjects: []
+    m_AddedComponents: []
+  m_SourcePrefab: {fileID: 100100000, guid: a74d9a7ccf2582a4389f1ddd5608e409, type: 3}
 --- !u!1 &602928319
 GameObject:
   m_ObjectHideFlags: 0
@@ -2875,6 +2957,8 @@ MonoBehaviour:
   musicVolumeSlider: {fileID: 1186568595}
   sfxVolumeSlider: {fileID: 574566128}
   fullscreenToggle: {fileID: 2147231225}
+  controlsButton: {fileID: 0}
+  controlsPanel: {fileID: 0}
 --- !u!1 &1139604602
 GameObject:
   m_ObjectHideFlags: 0
@@ -4751,8 +4835,11 @@ MonoBehaviour:
   cellMargin: {x: 8, y: 8}
   lineColor: {r: 0.8, g: 0.8, b: 0.8, a: 0.6}
   lineWidth: 3
+  borderColor: {r: 1, g: 1, b: 1, a: 0.9}
+  borderWidth: 1.5
   currentColor: {r: 0.2, g: 0.9, b: 0.3, a: 0.9}
   visitedColor: {r: 0.4, g: 0.4, b: 0.45, a: 0.8}
+  undiscoveredColor: {r: 0.2, g: 0.2, b: 0.25, a: 0.8039216}
 --- !u!114 &1979242120
 MonoBehaviour:
   m_ObjectHideFlags: 0

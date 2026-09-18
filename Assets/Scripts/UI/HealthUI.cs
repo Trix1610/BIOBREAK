@@ -2,7 +2,6 @@ using System.Collections;
 using TMPro;
 using UnityEngine;
 using UnityEngine.SceneManagement;
-using Core;
 
 public sealed class HealthPresenter
 {
@@ -71,7 +70,7 @@ public class HealthUI : MonoBehaviour
 
         while (player == null || stats == null)
         {
-            player = PlayerReference.Instance?.Player;
+            player = GameObject.FindWithTag("Player");
 
             if (player != null)
             {

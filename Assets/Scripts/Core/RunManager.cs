@@ -12,6 +12,12 @@ public class RunManager : MonoBehaviour
     
     public Dictionary<string, Vector2Int> DiscoveredRoomPositions { get; private set; } = new Dictionary<string, Vector2Int>();
 
+    [Header("Background Settings")]
+    [SerializeField] private Sprite roomBackgroundSprite;
+
+    [Header("Platform Settings")]
+    [SerializeField] private Sprite platformSprite;
+
     private readonly string[] rooms =
     {
         SceneNames.StartRoom,
@@ -57,13 +63,10 @@ public class RunManager : MonoBehaviour
     {
         runState.Reset();
         DiscoveredRoomPositions.Clear();
-        
         DiscoveredRoomPositions[SceneNames.StartRoom] = new Vector2Int(0, 0);
-
         GenerateRoute();
     }
 
-    // Методы для проверки и управления наградами
     public bool HasPendingReward(string roomName) => runState.RoomsWithPendingReward.Contains(roomName);
     public bool IsRewardCollected(string roomName) => runState.RoomsRewardCollected.Contains(roomName);
 
@@ -82,7 +85,6 @@ public class RunManager : MonoBehaviour
         Debug.Log($"Награда в комнате {roomName} успешно подобрана!");
     }
 
-    // НОВЫЕ МЕТОДЫ: Сохранение и получение индекса конкретного предмета в комнате
     public void SaveRoomRewardIndex(string roomName, int index)
     {
         runState.RoomRewardIndices[roomName] = index;
@@ -93,24 +95,121 @@ public class RunManager : MonoBehaviour
         return runState.RoomRewardIndices.TryGetValue(roomName, out index);
     }
 
-    // Срабатывает автоматически при загрузке любой комнаты
     private void OnSceneLoaded(Scene scene, LoadSceneMode mode)
     {
         string currentRoom = scene.name;
+        Debug.Log($"[RunManager] Загружена сцена: {currentRoom}");
 
-        // 1. Автоматически меняем фон главной камеры на темно-серый
-        Camera roomCamera = Camera.main;
-        if (roomCamera != null)
-        {
-            roomCamera.clearFlags = CameraClearFlags.SolidColor;
-            roomCamera.backgroundColor = new Color(0.15f, 0.15f, 0.15f); // Тёмно-серый цвет
-        }
+        SetupRoomBackground();
+        SetupPlatforms();
 
-        // 2. Если комната уже зачищена, дополнительно подчищаем оставшиеся объекты
         if (runState.ClearedRooms.Contains(currentRoom))
         {
             StartCoroutine(ClearRoomObjectsRoutine());
         }
+    }
+
+    private void SetupRoomBackground()
+    {
+        Camera roomCamera = Camera.main;
+        if (roomCamera != null)
+        {
+            roomCamera.clearFlags = CameraClearFlags.SolidColor;
+            roomCamera.backgroundColor = new Color(0.15f, 0.15f, 0.15f);
+        }
+
+        if (roomBackgroundSprite == null) return;
+
+        GameObject bgObj = GameObject.Find("GeneratedRoomBackground");
+        if (bgObj == null)
+        {
+            bgObj = new GameObject("GeneratedRoomBackground");
+            
+            SpriteRenderer sr = bgObj.AddComponent<SpriteRenderer>();
+            sr.sprite = roomBackgroundSprite;
+            sr.sortingOrder = -10; 
+            bgObj.transform.position = new Vector3(0f, 0f, 0f);
+        }
+    }
+
+    private void SetupPlatforms()
+    {
+        if (platformSprite == null)
+        {
+            platformSprite = Resources.Load<Sprite>("platform_0");
+            if (platformSprite == null)
+            {
+                Debug.LogError("[RunManager] ОШИБКА: platformSprite не назначен в инспекторе и не найден в Resources!");
+                return;
+            }
+        }
+
+        int groundLayerIndex = LayerMask.NameToLayer("Ground");
+        int wallsLayerIndex = LayerMask.NameToLayer("Walls");
+
+        GameObject[] allObjects = GameObject.FindObjectsOfType<GameObject>();
+        int platformCount = 0;
+
+        foreach (GameObject obj in allObjects)
+        {
+            bool isGround = (groundLayerIndex != -1 && obj.layer == groundLayerIndex);
+            bool isWall = (wallsLayerIndex != -1 && obj.layer == wallsLayerIndex);
+
+            if (isGround || isWall)
+            {
+                platformCount++;
+
+                Transform visualChild = obj.transform.Find("PlatformVisual");
+                GameObject visualObj;
+
+                if (visualChild == null)
+                {
+                    visualObj = new GameObject("PlatformVisual");
+                    visualObj.transform.SetParent(obj.transform);
+                }
+                else
+                {
+                    visualObj = visualChild.gameObject;
+                }
+
+                visualObj.transform.localPosition = Vector3.zero;
+                visualObj.transform.localRotation = Quaternion.identity;
+
+                SpriteRenderer sr = visualObj.GetComponent<SpriteRenderer>();
+                if (sr == null)
+                {
+                    sr = visualObj.AddComponent<SpriteRenderer>();
+                }
+
+                sr.sprite = platformSprite;
+                sr.sortingOrder = 1;
+
+                BoxCollider2D collider = obj.GetComponent<BoxCollider2D>();
+                if (collider != null && sr.sprite != null)
+                {
+                    visualObj.transform.localPosition = collider.offset;
+
+                    Vector2 spriteSize = sr.sprite.bounds.size;
+                    if (spriteSize.x > 0 && spriteSize.y > 0)
+                    {
+                        float scaleX = collider.size.x / spriteSize.x;
+                        float scaleY = collider.size.y / spriteSize.y;
+
+                        visualObj.transform.localScale = new Vector3(
+                            scaleX > 0 ? scaleX : 1f, 
+                            scaleY > 0 ? scaleY : 1f, 
+                            1f
+                        );
+                    }
+                }
+                else
+                {
+                    visualObj.transform.localScale = Vector3.one;
+                }
+            }
+        }
+
+        Debug.Log($"[RunManager] Настроено объектов (Ground/Walls): {platformCount}");
     }
 
     private IEnumerator ClearRoomObjectsRoutine()
@@ -118,7 +217,6 @@ public class RunManager : MonoBehaviour
         yield return null;
         yield return null;
 
-        // Если вдруг какой-то объект проскочил Awake у врага, подчищаем по тегам
         GameObject[] enemies = GameObject.FindGameObjectsWithTag("Enemy");
         foreach (GameObject enemy in enemies)
         {
@@ -132,7 +230,6 @@ public class RunManager : MonoBehaviour
         if (!runState.ClearedRooms.Contains(currentRoom))
         {
             runState.ClearedRooms.Add(currentRoom);
-            Debug.Log($"Комната {currentRoom} зачищена и сохранена в RunManager!");
         }
     }
 
@@ -145,13 +242,10 @@ public class RunManager : MonoBehaviour
     private void GenerateRoute()
     {
         List<string> shuffledRooms = new List<string>(rooms);
-
         Shuffle(shuffledRooms);
-
         shuffledRooms.Remove(SceneNames.StartRoom);
 
         string previousRoom = SceneNames.StartRoom;
-
         foreach (string room in shuffledRooms)
         {
             ConnectRooms(previousRoom, room);
@@ -168,12 +262,10 @@ public class RunManager : MonoBehaviour
     public string GetDestination(string room, string direction)
     {
         string key = room + "|" + direction;
-
         if (runState.RoomConnections.TryGetValue(key, out string destination))
         {
             return destination;
         }
-
         return null;
     }
 
