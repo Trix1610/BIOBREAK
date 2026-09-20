@@ -8,11 +8,17 @@ public class CharacterController : MonoBehaviour
 {
     [Header("Ground Check")]
     [SerializeField] private Transform groundCheck;
-    [SerializeField] private float groundCheckRadius = 0.2f;
+    [SerializeField] private float groundCheckRadius = 0.5f;
     [SerializeField] private LayerMask groundLayer;
 
-    [Header("Combat")]
-    [SerializeField] private Weapon currentWeapon; // Ссылка на текущее оружие
+    [Header("Input")]
+    [SerializeField] private InputActionReference jumpAction;
+
+    [Header("Combat & Weapons")]
+    [SerializeField] private GameObject weaponPrefab;   // Префаб оружия из папки Project
+    [SerializeField] private Transform weaponHoldPoint; // Точка (рука) на персонаже, куда спавнить оружие
+    
+    private Weapon currentWeapon; // Ссылка на уже созданный экземпляр оружия
 
     private Rigidbody2D rb;
     private Animator animator;
@@ -34,15 +40,21 @@ public class CharacterController : MonoBehaviour
         stats = GetComponent<CharacterStats>();
         spriteRenderer = GetComponent<SpriteRenderer>();
 
-        // Если оружие не привязано вручную в Inspector, ищем его на персонаже или его дочерних объектах
-        if (currentWeapon == null)
+        // Если задан префаб и точка крепления — спавним оружие динамически!
+        if (weaponPrefab != null && weaponHoldPoint != null)
         {
-            currentWeapon = GetComponentInChildren<Weapon>();
-            Debug.Log($"CharacterController Awake: currentWeapon найден через GetComponentInChildren: {currentWeapon != null}");
-        }
-        else
-        {
-            Debug.Log($"CharacterController Awake: currentWeapon уже назначен в Inspector: {currentWeapon.name}");
+            GameObject weaponObj = Instantiate(weaponPrefab, weaponHoldPoint);
+
+            // Привязываем к руке и сбрасываем локальные координаты, чтобы не улетело в космос
+            weaponObj.transform.localPosition = Vector3.zero;
+            weaponObj.transform.localRotation = Quaternion.identity;
+
+            currentWeapon = weaponObj.GetComponent<Weapon>();
+
+            if (currentWeapon != null)
+            {
+                currentWeapon.gameObject.SetActive(true);
+            }
         }
     }
 
@@ -51,6 +63,7 @@ public class CharacterController : MonoBehaviour
         CheckGround();
         UpdateAnimator();
         UpdateSpriteFlip();
+        UpdateVariableJump();
     }
 
     private void FixedUpdate()
@@ -62,7 +75,6 @@ public class CharacterController : MonoBehaviour
     {
         float speed = stats != null ? stats.MoveSpeed : 7f;
 
-        // Мгновенная остановка по оси X при отсутствии ввода
         if (Mathf.Abs(moveInput.x) < 0.01f)
         {
             rb.linearVelocity = new Vector2(0f, rb.linearVelocity.y);
@@ -71,12 +83,14 @@ public class CharacterController : MonoBehaviour
         {
             rb.linearVelocity = new Vector2(moveInput.x * speed, rb.linearVelocity.y);
         }
-
     }
 
     private void CheckGround()
     {
-        if (groundCheck == null) return;
+        if (groundCheck == null)
+        {
+            return;
+        }
         isGrounded = Physics2D.OverlapCircle(groundCheck.position, groundCheckRadius, groundLayer);
     }
 
@@ -95,16 +109,12 @@ public class CharacterController : MonoBehaviour
     {
         if (spriteRenderer == null) return;
 
-        // Получаем позицию мыши
         Vector2 mousePosition = Mouse.current.position.ReadValue();
         Camera mainCamera = Camera.main ?? FindAnyObjectByType<Camera>();
         
         if (mainCamera == null) return;
 
-        // Переводим в мировые координаты
         Vector3 mouseWorldPosition = mainCamera.ScreenToWorldPoint(new Vector3(mousePosition.x, mousePosition.y, 0f));
-        
-        // Переворачиваем спрайт если мышь слева от персонажа
         bool isMouseOnLeft = mouseWorldPosition.x < transform.position.x;
         spriteRenderer.flipX = isMouseOnLeft;
     }
@@ -118,33 +128,37 @@ public class CharacterController : MonoBehaviour
 
     public void OnJump(InputValue value)
     {
-        if (!value.isPressed) return;
-
-        float force = stats != null ? stats.JumpForce : 12f;
-        rb.linearVelocity = new Vector2(rb.linearVelocity.x, force);
+        // Нажатие - прыгаем только если на земле
+        if (value.isPressed && isGrounded)
+        {
+            float force = stats != null ? stats.JumpForce : 12f;
+            rb.linearVelocity = new Vector2(rb.linearVelocity.x, force);
+        }
     }
 
-    // Вызывается автоматически при клике ЛКМ (экшен Attack в Player Input)
+    private void UpdateVariableJump()
+    {
+        // Читаем состояние кнопки напрямую через InputAction
+        bool isJumpPressed = jumpAction != null && jumpAction.action.IsPressed();
+
+        // Если кнопка отпущена и мы летим вверх - обнуляем скорость (перестаем подниматься)
+        // Но не ускоряем падение - гравитация работает как обычно
+        if (!isJumpPressed && rb.linearVelocity.y > 0)
+        {
+            rb.linearVelocity = new Vector2(rb.linearVelocity.x, 0f);
+        }
+    }
+
     public void OnAttack(InputValue value)
     {
-        Debug.Log($"OnAttack вызван! isPressed: {value.isPressed}");
-        
         if (!value.isPressed) return;
 
-        Debug.Log($"OnAttack: currentWeapon != null: {currentWeapon != null}");
-        
         if (currentWeapon != null)
         {
-            Debug.Log($"OnAttack: вызываем Attack() на оружии: {currentWeapon.name}");
             currentWeapon.Attack();
-        }
-        else
-        {
-            Debug.LogWarning("CurrentWeapon не назначено в CharacterController!");
         }
     }
 
-    // Вызывается при нажатии клавиши перезарядки (экшен Reload в Player Input)
     public void OnReload(InputValue value)
     {
         if (!value.isPressed) return;
