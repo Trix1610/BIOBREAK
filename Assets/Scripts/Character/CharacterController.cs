@@ -13,6 +13,7 @@ public class CharacterController : MonoBehaviour
 
     [Header("Input")]
     [SerializeField] private InputActionReference jumpAction;
+    [SerializeField] private InputActionReference attackAction;
 
     [Header("Combat & Weapons")]
     [SerializeField] private GameObject weaponPrefab;   // Префаб оружия из папки Project
@@ -64,6 +65,7 @@ public class CharacterController : MonoBehaviour
         UpdateAnimator();
         UpdateSpriteFlip();
         UpdateVariableJump();
+        UpdateAttack();
     }
 
     private void FixedUpdate()
@@ -151,9 +153,15 @@ public class CharacterController : MonoBehaviour
 
     public void OnAttack(InputValue value)
     {
-        if (!value.isPressed) return;
+        // Не используем этот метод, читаем состояние напрямую через InputActionReference
+    }
 
-        if (currentWeapon != null)
+    private void UpdateAttack()
+    {
+        // Читаем состояние кнопки напрямую через InputAction
+        bool isAttackButtonPressed = attackAction != null && attackAction.action.IsPressed();
+
+        if (isAttackButtonPressed && currentWeapon != null)
         {
             currentWeapon.Attack();
         }
@@ -166,6 +174,29 @@ public class CharacterController : MonoBehaviour
         if (currentWeapon != null)
         {
             currentWeapon.Reload();
+        }
+    }
+
+    public void EquipWeapon(GameObject newWeaponPrefab)
+    {
+        if (newWeaponPrefab == null || weaponHoldPoint == null)
+            return;
+
+        // Удаляем текущее оружие
+        if (currentWeapon != null)
+        {
+            Destroy(currentWeapon.gameObject);
+        }
+
+        // Спавним новое оружие
+        GameObject weaponObj = Instantiate(newWeaponPrefab, weaponHoldPoint);
+        weaponObj.transform.localPosition = Vector3.zero;
+        weaponObj.transform.localRotation = Quaternion.identity;
+
+        currentWeapon = weaponObj.GetComponent<Weapon>();
+        if (currentWeapon != null)
+        {
+            currentWeapon.gameObject.SetActive(true);
         }
     }
 

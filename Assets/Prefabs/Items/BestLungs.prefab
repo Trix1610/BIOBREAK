@@ -193,7 +193,7 @@ GameObject:
   - component: {fileID: 8913880299203271019}
   - component: {fileID: 2426663053448612461}
   - component: {fileID: 8216204609497013221}
-  m_Layer: 0
+  m_Layer: 11
   m_Name: BestLungs
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -343,3 +343,4 @@ MonoBehaviour:
   - statType: 0
     value: 25
     modifierType: 0
+  weaponPrefab: {fileID: 0}

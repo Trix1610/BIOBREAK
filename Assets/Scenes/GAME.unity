@@ -1374,9 +1374,9 @@ MonoBehaviour:
     m_Bits: 64
   spawnYOffset: 1
   rewardPrefabs:
-  - {fileID: 3638220506620364316, guid: 3e159b4b27dbc474a989102abdd561f0, type: 3}
-  - {fileID: 1909757450109467535, guid: 51cce9ecdde96ea41a85329fa495e50b, type: 3}
-  - {fileID: 1909757450109467535, guid: 5e99a380e11ecd345a7de049b6f742b0, type: 3}
+  - {fileID: 3983008039185315273, guid: ae518fba596e210418034903722ec76f, type: 3}
+  - {fileID: 3983008039185315273, guid: ae518fba596e210418034903722ec76f, type: 3}
+  - {fileID: 3983008039185315273, guid: ae518fba596e210418034903722ec76f, type: 3}
   rewardHeightOffset: 1
 --- !u!4 &548934653
 Transform:

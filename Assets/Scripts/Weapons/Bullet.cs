@@ -41,6 +41,9 @@ namespace Weapons
             if (collision.gameObject.CompareTag("RoomTrigger"))
                 return;
 
+            if (collision.gameObject.CompareTag("Player"))
+                return;
+
             IDamageable damageable =
                 collision.gameObject.GetComponentInParent<IDamageable>();
 
@@ -53,8 +56,11 @@ namespace Weapons
         {
             if (collision.gameObject.CompareTag("RoomTrigger"))
             {
-                return; 
+                return;
             }
+
+            if (collision.gameObject.CompareTag("Player"))
+                return;
 
             IDamageable damageable =
                 collision.gameObject.GetComponentInParent<IDamageable>();

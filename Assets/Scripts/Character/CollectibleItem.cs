@@ -31,6 +31,9 @@ namespace Character
         [Header("Item Buffs")]
         [SerializeField] private List<StatBuff> buffs = new List<StatBuff>();
 
+        [Header("Weapon")]
+        [SerializeField] private GameObject weaponPrefab; // Префаб оружия для экипировки
+
         private string itemName;
         private bool isPlayerInRange;
         private bool isCollected;
@@ -157,6 +160,19 @@ namespace Character
             if (healthBonusAdded > 0f)
             {
                 stats.Heal(healthBonusAdded);
+            }
+
+            // Экипируем оружие если указан префаб
+            if (weaponPrefab != null)
+            {
+                CharacterController characterController =
+                    playerCollider.GetComponentInParent<CharacterController>() ??
+                    playerCollider.GetComponentInChildren<CharacterController>();
+
+                if (characterController != null)
+                {
+                    characterController.EquipWeapon(weaponPrefab);
+                }
             }
 
             Debug.Log($"Предмет подобран: {itemName}");

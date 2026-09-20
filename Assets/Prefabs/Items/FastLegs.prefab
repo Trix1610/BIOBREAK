@@ -12,7 +12,7 @@ GameObject:
   - component: {fileID: 3775690571791893970}
   - component: {fileID: 1058916196001253863}
   - component: {fileID: 7384379078748655789}
-  m_Layer: 0
+  m_Layer: 11
   m_Name: FastLegs
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -162,6 +162,7 @@ MonoBehaviour:
   - statType: 1
     value: 0.75
     modifierType: 1
+  weaponPrefab: {fileID: 0}
 --- !u!1 &8412046765243845359
 GameObject:
   m_ObjectHideFlags: 0
