@@ -47,35 +47,22 @@ public class Weapon : MonoBehaviour
     private void Awake()
     {
         spriteRenderer = GetComponent<SpriteRenderer>();
-        Debug.Log($"[Weapon] Awake вызван на оружии: {gameObject.name}");
     }
 
     private void Start()
     {
         currentAmmo = maxAmmo;
-        Debug.Log($"[Weapon] Start: Оружие '{weaponName}' инициализировано. Патронов: {currentAmmo}/{maxAmmo}");
-
-        if (bulletPrefab == null)
-            Debug.LogError($"[Weapon] ОШИБКА: На оружии {gameObject.name} не назначен BulletPrefab!");
-        
-        if (firePoint == null)
-            Debug.LogError($"[Weapon] ОШИБКА: На оружии {gameObject.name} не назначен FirePoint!");
-
-        // Пытаемся создать фабрику сразу
         TryInitFactory();
     }
 
     private void Update()
     {
-        // Безопасный таймер перезарядки (без корутин)
         if (isReloading && Time.time >= reloadEndTime)
         {
             currentAmmo = maxAmmo;
             isReloading = false;
-            Debug.Log($"[Weapon] Перезарядка завершена! Патроны восстановлены: {currentAmmo}/{maxAmmo}");
         }
 
-        // Переворачиваем спрайт оружия, когда оно смотрит влево
         if (spriteRenderer == null) return;
 
         float angle = transform.eulerAngles.z;
@@ -86,30 +73,20 @@ public class Weapon : MonoBehaviour
 
     public void Attack()
     {
-        Debug.Log($"[Weapon] Метод Attack() запущен. Текущие патроны: {currentAmmo}/{maxAmmo}, isReloading: {isReloading}");
-
         if (isReloading)
-        {
-            Debug.LogWarning("[Weapon] Атака отменена: оружие находится в процессе перезарядки!");
             return;
-        }
 
         if (Time.time < nextFireTime)
-        {
-            Debug.Log($"[Weapon] Атака отменена: слишком высокая скорострельность. Ждать еще: {nextFireTime - Time.time:F2} сек.");
             return;
-        }
 
         if (currentAmmo <= 0)
         {
-            Debug.Log("[Weapon] Магазин пуст! Вызываем метод Reload().");
             Reload();
             return;
         }
 
         currentAmmo--;
         nextFireTime = Time.time + fireRate;
-        Debug.Log($"[Weapon] Выстрел совершен! Потрачен патрон. Осталось: {currentAmmo}/{maxAmmo}");
 
         switch (weaponType)
         {
@@ -134,10 +111,7 @@ public class Weapon : MonoBehaviour
     public void Reload()
     {
         if (isReloading || currentAmmo == maxAmmo)
-        {
-            Debug.Log($"[Weapon] Перезарядка пропущена. isReloading: {isReloading}, патроны полный магазин: {currentAmmo == maxAmmo}");
             return;
-        }
 
         if (!gameObject.activeSelf)
         {
@@ -146,7 +120,6 @@ public class Weapon : MonoBehaviour
 
         isReloading = true;
         reloadEndTime = Time.time + reloadTime;
-        Debug.Log($"[Weapon] Перезарядка началась для {weaponName}. Ждем {reloadTime} сек...");
     }
 
     private void TryInitFactory()
@@ -155,39 +128,20 @@ public class Weapon : MonoBehaviour
         {
             projectilePool = new ProjectilePool(bulletPrefab);
             projectileFactory = new ProjectileFactory(bulletPrefab, bulletSpeed, projectilePool);
-            Debug.Log($"[Weapon] Пул и фабрика снарядов успешно созданы.");
         }
     }
 
     private void FireProjectile()
     {
-        Debug.Log("[Weapon] Срабатывает FireProjectile()...");
-
         if (bulletPrefab == null || firePoint == null)
-        {
-            Debug.LogError($"[Weapon] Невозможно выстрелить: BulletPrefab ({bulletPrefab}) или FirePoint ({firePoint}) не назначены!");
             return;
-        }
 
-        // Гарантируем создание фабрики (ленивая инициализация)
         TryInitFactory();
 
         if (projectileFactory == null)
-        {
-            Debug.LogError("[Weapon] ОШИБКА: projectileFactory равен null даже после попытки создания!");
             return;
-        }
 
-        GameObject spawnedBullet = projectileFactory.Spawn(firePoint, (int)damage);
-        
-        if (spawnedBullet != null)
-        {
-            Debug.Log($"[Weapon] Снаряд успешно заспавнен! Имя объекта: {spawnedBullet.name}, Позиция: {spawnedBullet.transform.position}");
-        }
-        else
-        {
-            Debug.LogError("[Weapon] Фабрика вернула null при попытке заспавнить пулю!");
-        }
+        projectileFactory.Spawn(firePoint, (int)damage);
     }
 
     private void FireLaser()
@@ -200,7 +154,6 @@ public class Weapon : MonoBehaviour
         {
             IDamageable damageable = hit.collider.GetComponentInParent<IDamageable>();
             DamageSystem.Apply(damageable, (int)damage);
-            Debug.Log($"{weaponType} laser hit {hit.collider.name}!");
         }
     }
 
@@ -215,8 +168,6 @@ public class Weapon : MonoBehaviour
             IDamageable damageable = hit.GetComponentInParent<IDamageable>();
             DamageSystem.Apply(damageable, (int)damage);
         }
-
-        Debug.Log($"{weaponType} shock hit {hits.Length} targets!");
     }
 
     private void FireMelee()
@@ -230,7 +181,5 @@ public class Weapon : MonoBehaviour
             IDamageable damageable = hit.GetComponentInParent<IDamageable>();
             DamageSystem.Apply(damageable, (int)damage);
         }
-
-        Debug.Log($"{weaponType} melee hit {hits.Length} targets!");
     }
 }

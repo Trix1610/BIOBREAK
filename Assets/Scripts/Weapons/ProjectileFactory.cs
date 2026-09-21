@@ -19,7 +19,7 @@ public class ProjectileFactory
         GameObject bulletObj = pool.Get();
         
         bulletObj.transform.position = firePoint.position;
-        bulletObj.transform.rotation = firePoint.rotation;
+        bulletObj.transform.rotation = firePoint.rotation * Quaternion.Euler(0, 0, -90f);
 
         // Задаем скорость пули в направлении вращения
         Rigidbody2D rb = bulletObj.GetComponent<Rigidbody2D>();

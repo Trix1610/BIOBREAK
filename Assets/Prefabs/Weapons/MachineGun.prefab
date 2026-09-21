@@ -302,7 +302,7 @@ MonoBehaviour:
   fireRate: 0.1
   maxAmmo: 30
   reloadTime: 2
-  bulletPrefab: {fileID: 7051863594602424991, guid: 921eb4edf029bfd4b8b5f1df4071bd30, type: 3}
+  bulletPrefab: {fileID: 7538140114496933091, guid: c115cbe60e63195449424dd3a1c57d1d, type: 3}
   firePoint: {fileID: 8595112851188911006}
   bulletSpeed: 25
   laserRange: 100

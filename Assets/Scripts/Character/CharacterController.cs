@@ -25,6 +25,7 @@ public class CharacterController : MonoBehaviour
     private Animator animator;
     private CharacterStats stats;
     private SpriteRenderer spriteRenderer;
+    private Camera mainCamera;
 
     private Vector2 moveInput;
     private bool isGrounded;
@@ -40,6 +41,7 @@ public class CharacterController : MonoBehaviour
         animator = GetComponent<Animator>();
         stats = GetComponent<CharacterStats>();
         spriteRenderer = GetComponent<SpriteRenderer>();
+        mainCamera = Camera.main ?? FindAnyObjectByType<Camera>();
 
         // Если задан префаб и точка крепления — спавним оружие динамически!
         if (weaponPrefab != null && weaponHoldPoint != null)
