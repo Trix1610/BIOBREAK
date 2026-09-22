@@ -5,14 +5,24 @@ public class WeaponAim : MonoBehaviour
 {
     private Camera mainCamera;
     private float nextCameraSearchTime;
+    private InputAction lookAction;
 
-    private void Start()
+    private void Awake()
     {
+        PlayerInput playerInput = GetComponentInParent<PlayerInput>();
+        if (playerInput != null)
+        {
+            lookAction = playerInput.actions.FindAction("Look", throwIfNotFound: false);
+        }
+
         FindCamera();
     }
 
     private void Update()
     {
+        if (Time.timeScale == 0f)
+            return;
+
         // Если камера по какой-то причине пропала (например, уничтожена), пробуем найти её снова
         if (mainCamera == null)
         {
@@ -24,20 +34,29 @@ public class WeaponAim : MonoBehaviour
             if (mainCamera == null) return; // Если камеры всё еще нет, пропускаем кадр, чтобы не было ошибки
         }
 
-        if (Mouse.current == null) return;
+        if (lookAction == null)
+            return;
 
-        // 1. Получаем позицию мыши через новый Input System
-        Vector2 mouseScreenPosition = Mouse.current.position.ReadValue();
-        
-        // 2. Переводим в мировые координаты игры
-        Vector3 mouseWorldPosition = mainCamera.ScreenToWorldPoint(new Vector3(mouseScreenPosition.x, mouseScreenPosition.y, 0f));
-        mouseWorldPosition.z = 0f; // Обнуляем Z для 2D
+        Vector2 lookValue = lookAction.ReadValue<Vector2>();
+        Vector2 direction;
 
-        // 3. Находим вектор направления и вычисляем угол
-        Vector3 direction = mouseWorldPosition - transform.position;
+        if (lookAction.activeControl?.device is Gamepad ||
+            lookAction.activeControl?.device is Joystick)
+        {
+            direction = lookValue;
+        }
+        else
+        {
+            Vector3 mouseWorldPosition = mainCamera.ScreenToWorldPoint(
+                new Vector3(lookValue.x, lookValue.y, 0f));
+            direction = mouseWorldPosition - transform.position;
+        }
+
+        if (direction.sqrMagnitude < 0.0001f)
+            return;
+
         float angle = Mathf.Atan2(direction.y, direction.x) * Mathf.Rad2Deg;
 
-        // 4. Поворачиваем объект в сторону мыши
         transform.rotation = Quaternion.Euler(new Vector3(0, 0, angle));
     }
 

@@ -12,11 +12,20 @@ public class MainMenuManager : MonoBehaviour
     [SerializeField] private Button exitButton;
     [SerializeField] private GameObject settingsPanel;
 
+    private InputAction menuNavigateAction;
+    private InputAction menuSubmitAction;
     private Button[] menuButtons;
     private int selectedIndex = 0;
 
     private void Start()
     {
+        PlayerInput playerInput = GetComponent<PlayerInput>();
+        if (playerInput != null)
+        {
+            menuNavigateAction = playerInput.actions.FindAction("MenuNavigate", throwIfNotFound: false);
+            menuSubmitAction = playerInput.actions.FindAction("MenuSubmit", throwIfNotFound: false);
+        }
+
         var buttons = new System.Collections.Generic.List<Button>();
         
         if (startButton != null)
@@ -61,33 +70,32 @@ public class MainMenuManager : MonoBehaviour
 
     private void Update()
     {
-        if (Keyboard.current == null) return;
+        if (menuButtons == null || menuButtons.Length == 0)
+            return;
 
-        // Навигация стрелками
-        if (Keyboard.current.upArrowKey.wasPressedThisFrame)
+        Vector2 navigation = menuNavigateAction != null
+            ? menuNavigateAction.ReadValue<Vector2>()
+            : Vector2.zero;
+
+        if (menuNavigateAction != null &&
+            menuNavigateAction.WasPressedThisFrame() && navigation.y > 0.5f)
         {
             selectedIndex--;
             if (selectedIndex < 0) selectedIndex = menuButtons.Length - 1;
             SelectButton(selectedIndex);
         }
 
-        if (Keyboard.current.downArrowKey.wasPressedThisFrame)
+        if (menuNavigateAction != null &&
+            menuNavigateAction.WasPressedThisFrame() && navigation.y < -0.5f)
         {
             selectedIndex++;
             if (selectedIndex >= menuButtons.Length) selectedIndex = 0;
             SelectButton(selectedIndex);
         }
 
-        // Enter или Space для нажатия выбранной кнопки
-        if (Keyboard.current.enterKey.wasPressedThisFrame || Keyboard.current.spaceKey.wasPressedThisFrame)
+        if (menuSubmitAction != null && menuSubmitAction.WasPressedThisFrame())
         {
             menuButtons[selectedIndex]?.onClick.Invoke();
-        }
-
-        // Escape для выхода
-        if (Keyboard.current.escapeKey.wasPressedThisFrame)
-        {
-            OnExitGameClicked();
         }
     }
 

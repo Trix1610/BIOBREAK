@@ -1,9 +1,7 @@
 using UnityEngine;
 using UnityEngine.SceneManagement;
 using System.Collections.Generic;
-#if ENABLE_INPUT_SYSTEM
 using UnityEngine.InputSystem;
-#endif
 using TMPro;
 
 namespace Character
@@ -20,7 +18,6 @@ namespace Character
     public class CollectibleItem : MonoBehaviour
     {
         [Header("Настройки взаимодействия")]
-        [SerializeField] private KeyCode legacyInteractKey = KeyCode.E;
         [SerializeField] private string playerTag = "Player";
 
         [Header("Отображение названия")]
@@ -38,6 +35,7 @@ namespace Character
         private bool isPlayerInRange;
         private bool isCollected;
         private Collider2D playerCollider;
+        private InputAction interactAction;
 
         private void Awake()
         {
@@ -80,6 +78,10 @@ namespace Character
             {
                 isPlayerInRange = true;
                 playerCollider = collision;
+                PlayerInput playerInput = collision.GetComponentInParent<PlayerInput>();
+                interactAction = playerInput != null
+                    ? playerInput.actions.FindAction("Interact", throwIfNotFound: false)
+                    : null;
                 ShowUI();
             }
         }
@@ -90,6 +92,7 @@ namespace Character
             {
                 isPlayerInRange = false;
                 playerCollider = null;
+                interactAction = null;
                 HideUI();
             }
         }
@@ -114,16 +117,7 @@ namespace Character
 
         private bool CheckInteractPressed()
         {
-#if ENABLE_INPUT_SYSTEM && !ENABLE_LEGACY_INPUT_MANAGER
-            if (Keyboard.current != null)
-            {
-                var key = Key.E; 
-                return Keyboard.current[key].wasPressedThisFrame;
-            }
-            return false;
-#else
-            return Input.GetKeyDown(legacyInteractKey);
-#endif
+            return interactAction != null && interactAction.WasPressedThisFrame();
         }
 
         private void Collect()

@@ -32,6 +32,9 @@ public class PauseMenu : MonoBehaviour
     [SerializeField] private Button mainMenuButton;
 
     private readonly PauseController pauseController = new();
+    private InputAction pauseAction;
+    private InputAction menuNavigateAction;
+    private InputAction menuSubmitAction;
     private Button[] menuButtons;
     private int selectedIndex = 0;
     
@@ -95,14 +98,13 @@ public class PauseMenu : MonoBehaviour
 
     private void Update()
     {
-        if (Keyboard.current == null) return;
-
         // Если открыты настройки, паузу по ESC обрабатывает само меню настроек
         if (IsInSubMenu) return;
 
-        if (Keyboard.current.escapeKey.wasPressedThisFrame)
+        TryGetInputActions();
+        if (pauseAction != null && pauseAction.WasPressedThisFrame())
         {
-            Debug.Log("[PauseMenu] Нажата клавиша ESC.");
+            Debug.Log("[PauseMenu] Получено действие Pause.");
             if (pauseController.IsPaused)
             {
                 Resume();
@@ -115,23 +117,43 @@ public class PauseMenu : MonoBehaviour
 
         if (!pauseController.IsPaused) return;
 
-        if (Keyboard.current.upArrowKey.wasPressedThisFrame)
+        Vector2 navigation = menuNavigateAction != null
+            ? menuNavigateAction.ReadValue<Vector2>()
+            : Vector2.zero;
+
+        if (menuNavigateAction != null &&
+            menuNavigateAction.WasPressedThisFrame() && navigation.y > 0.5f)
         {
             selectedIndex--;
             if (selectedIndex < 0) selectedIndex = menuButtons.Length - 1;
             SelectButton(selectedIndex);
         }
 
-        if (Keyboard.current.downArrowKey.wasPressedThisFrame)
+        if (menuNavigateAction != null &&
+            menuNavigateAction.WasPressedThisFrame() && navigation.y < -0.5f)
         {
             selectedIndex++;
             if (selectedIndex >= menuButtons.Length) selectedIndex = 0;
             SelectButton(selectedIndex);
         }
 
-        if (Keyboard.current.enterKey.wasPressedThisFrame || Keyboard.current.spaceKey.wasPressedThisFrame)
+        if (menuSubmitAction != null && menuSubmitAction.WasPressedThisFrame())
         {
             menuButtons[selectedIndex]?.onClick.Invoke();
+        }
+    }
+
+    private void TryGetInputActions()
+    {
+        if (pauseAction != null && menuNavigateAction != null && menuSubmitAction != null)
+            return;
+
+        PlayerInput playerInput = FindAnyObjectByType<PlayerInput>();
+        if (playerInput != null)
+        {
+            pauseAction = playerInput.actions.FindAction("Pause", throwIfNotFound: false);
+            menuNavigateAction = playerInput.actions.FindAction("MenuNavigate", throwIfNotFound: false);
+            menuSubmitAction = playerInput.actions.FindAction("MenuSubmit", throwIfNotFound: false);
         }
     }
 

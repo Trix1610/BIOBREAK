@@ -11,29 +11,58 @@ public class CharacterController : MonoBehaviour
     [SerializeField] private float groundCheckRadius = 0.5f;
     [SerializeField] private LayerMask groundLayer;
 
-    [Header("Input")]
-    [SerializeField] private InputActionReference jumpAction;
-    [SerializeField] private InputActionReference attackAction;
+    [Header("Physics")]
+    [SerializeField] private float fallGravityMultiplier = 2f;
+
+    [Header("Jump")]
+    [SerializeField, Range(0.1f, 1f)] private float jumpCutVelocityMultiplier = 0.5f;
 
     [Header("Combat & Weapons")]
-    [SerializeField] private GameObject weaponPrefab;   // Префаб оружия из папки Project
-    [SerializeField] private Transform weaponHoldPoint; // Точка (рука) на персонаже, куда спавнить оружие
-    
-    private Weapon currentWeapon; // Ссылка на уже созданный экземпляр оружия
+    [SerializeField] private GameObject weaponPrefab;
+    [SerializeField] private Transform weaponHoldPoint;
+
+    private Weapon currentWeapon;
 
     private Rigidbody2D rb;
     private Animator animator;
     private CharacterStats stats;
     private SpriteRenderer spriteRenderer;
     private Camera mainCamera;
+    private InputAction jumpAction;
+    private InputAction attackAction;
+    private InputAction lookAction;
 
+    // =========================================================
+    // INPUT
+    // =========================================================
+
+    // Movement приходит из PlayerInput -> OnMove()
     private Vector2 moveInput;
-    private bool isGrounded;
 
-    // Кэш хэшей параметров Animator
-    private static readonly int SpeedHash = Animator.StringToHash("Speed");
-    private static readonly int IsGroundedHash = Animator.StringToHash("IsGrounded");
-    private static readonly int VerticalVelocityHash = Animator.StringToHash("VerticalVelocity");
+    // =========================================================
+    // MOVEMENT
+    // =========================================================
+
+    private bool isGrounded;
+    private int jumpsRemaining;
+    private bool suppressJumpUntilReleased;
+
+    // =========================================================
+    // ANIMATOR HASHES
+    // =========================================================
+
+    private static readonly int SpeedHash =
+        Animator.StringToHash("Speed");
+
+    private static readonly int IsGroundedHash =
+        Animator.StringToHash("IsGrounded");
+
+    private static readonly int VerticalVelocityHash =
+        Animator.StringToHash("VerticalVelocity");
+
+    // =========================================================
+    // AWAKE
+    // =========================================================
 
     private void Awake()
     {
@@ -41,173 +70,460 @@ public class CharacterController : MonoBehaviour
         animator = GetComponent<Animator>();
         stats = GetComponent<CharacterStats>();
         spriteRenderer = GetComponent<SpriteRenderer>();
-        mainCamera = Camera.main ?? FindAnyObjectByType<Camera>();
 
-        // Если задан префаб и точка крепления — спавним оружие динамически!
-        if (weaponPrefab != null && weaponHoldPoint != null)
+        PlayerInput playerInput = GetComponent<PlayerInput>();
+        if (playerInput != null)
         {
-            GameObject weaponObj = Instantiate(weaponPrefab, weaponHoldPoint);
+            jumpAction = playerInput.actions.FindAction("Jump", throwIfNotFound: false);
+            attackAction = playerInput.actions.FindAction("Attack", throwIfNotFound: false);
+            lookAction = playerInput.actions.FindAction("Look", throwIfNotFound: false);
+        }
 
-            // Привязываем к руке и сбрасываем локальные координаты, чтобы не улетело в космос
-            weaponObj.transform.localPosition = Vector3.zero;
-            weaponObj.transform.localRotation = Quaternion.identity;
+        mainCamera = Camera.main;
 
-            currentWeapon = weaponObj.GetComponent<Weapon>();
+        if (mainCamera == null)
+        {
+            mainCamera = FindAnyObjectByType<Camera>();
+        }
 
-            if (currentWeapon != null)
-            {
-                currentWeapon.gameObject.SetActive(true);
-            }
+        // Не обращаемся здесь к stats.MaxJumps.
+        // CharacterStats может ещё не выполнить Awake().
+
+        SpawnStartingWeapon();
+    }
+
+    // =========================================================
+    // START
+    // =========================================================
+
+    private void Start()
+    {
+        int maxJumps = stats != null
+            ? stats.MaxJumps
+            : 1;
+
+        jumpsRemaining = maxJumps;
+
+        CheckGround();
+
+        if (isGrounded)
+        {
+            jumpsRemaining = maxJumps;
         }
     }
 
+    // =========================================================
+    // UPDATE
+    // =========================================================
+
     private void Update()
     {
+        if (Time.timeScale == 0f)
+        {
+            suppressJumpUntilReleased = true;
+            return;
+        }
+
         CheckGround();
+
+        UpdateJumpInput();
+
         UpdateAnimator();
+
         UpdateSpriteFlip();
-        UpdateVariableJump();
+
         UpdateAttack();
     }
+
+    // =========================================================
+    // FIXED UPDATE
+    // =========================================================
 
     private void FixedUpdate()
     {
         Move();
+
+        ApplyGravity();
     }
+
+    // =========================================================
+    // MOVEMENT
+    // =========================================================
 
     private void Move()
     {
-        float speed = stats != null ? stats.MoveSpeed : 7f;
+        float speed = stats != null
+            ? stats.MoveSpeed
+            : 7f;
 
-        if (Mathf.Abs(moveInput.x) < 0.01f)
+        float horizontalVelocity =
+            moveInput.x * speed;
+
+        // Меняем только X.
+        // Вертикальная скорость остаётся нетронутой.
+
+        rb.linearVelocity = new Vector2(
+            horizontalVelocity,
+            rb.linearVelocity.y
+        );
+    }
+
+    // =========================================================
+    // GRAVITY
+    // =========================================================
+
+    private void ApplyGravity()
+    {
+        if (rb.linearVelocity.y < 0f)
         {
-            rb.linearVelocity = new Vector2(0f, rb.linearVelocity.y);
-        }
-        else
-        {
-            rb.linearVelocity = new Vector2(moveInput.x * speed, rb.linearVelocity.y);
+            rb.linearVelocity +=
+                Vector2.up *
+                Physics2D.gravity.y *
+                (fallGravityMultiplier - 1f) *
+                Time.fixedDeltaTime;
         }
     }
+
+    // =========================================================
+    // GROUND CHECK
+    // =========================================================
 
     private void CheckGround()
     {
         if (groundCheck == null)
         {
+            isGrounded = false;
             return;
         }
-        isGrounded = Physics2D.OverlapCircle(groundCheck.position, groundCheckRadius, groundLayer);
+
+        bool wasGrounded = isGrounded;
+
+        isGrounded = Physics2D.OverlapCircle(
+            groundCheck.position,
+            groundCheckRadius,
+            groundLayer
+        );
+
+        // Только что приземлились.
+        if (!wasGrounded && isGrounded)
+        {
+            ResetJumps();
+        }
     }
+
+    private void ResetJumps()
+    {
+        int maxJumps = stats != null
+            ? stats.MaxJumps
+            : 1;
+
+        jumpsRemaining = maxJumps;
+    }
+
+    // =========================================================
+    // JUMP
+    // =========================================================
+
+    private void Jump()
+    {
+        int maxJumps = stats != null
+            ? stats.MaxJumps
+            : 1;
+
+        // Если стоим на земле, но счётчик почему-то 0,
+        // восстанавливаем его.
+
+        if (isGrounded && jumpsRemaining <= 0)
+        {
+            jumpsRemaining = maxJumps;
+        }
+
+        if (jumpsRemaining <= 0)
+            return;
+
+        float jumpForce = stats != null
+            ? stats.JumpForce
+            : 12f;
+
+        // Сохраняем горизонтальное движение.
+        rb.linearVelocity = new Vector2(
+            rb.linearVelocity.x,
+            jumpForce
+        );
+
+        jumpsRemaining--;
+    }
+
+    private void UpdateJumpInput()
+    {
+        if (jumpAction == null)
+            return;
+
+        // Submit в меню назначен на те же кнопки, что и Jump. После снятия
+        // паузы ждём отпускания, чтобы это нажатие не превратилось в прыжок.
+        if (suppressJumpUntilReleased)
+        {
+            if (jumpAction.IsPressed())
+                return;
+
+            suppressJumpUntilReleased = false;
+        }
+
+        if (jumpAction.WasPressedThisFrame())
+        {
+            Jump();
+        }
+
+        // WasReleasedThisFrame читается у самого действия Input System,
+        // поэтому одинаково работает для Space, геймпада и rebinding.
+        if (jumpAction.WasReleasedThisFrame() && rb.linearVelocity.y > 0f)
+        {
+            rb.linearVelocity = new Vector2(
+                rb.linearVelocity.x,
+                rb.linearVelocity.y * jumpCutVelocityMultiplier);
+        }
+    }
+
+    // =========================================================
+    // ANIMATION
+    // =========================================================
 
     private void UpdateAnimator()
     {
-        if (animator == null) return;
+        if (animator == null)
+            return;
 
-        float moveSpeedForAnimator = Mathf.Abs(moveInput.x) > 0.01f ? Mathf.Abs(rb.linearVelocity.x) : 0f;
+        float currentHorizontalSpeed =
+            Mathf.Abs(rb.linearVelocity.x);
 
-        animator.SetFloat(SpeedHash, moveSpeedForAnimator);
-        animator.SetBool(IsGroundedHash, isGrounded);
-        animator.SetFloat(VerticalVelocityHash, rb.linearVelocity.y);
+        animator.SetFloat(
+            SpeedHash,
+            currentHorizontalSpeed
+        );
+
+        animator.SetBool(
+            IsGroundedHash,
+            isGrounded
+        );
+
+        animator.SetFloat(
+            VerticalVelocityHash,
+            rb.linearVelocity.y
+        );
     }
+
+    // =========================================================
+    // SPRITE FLIP
+    // =========================================================
 
     private void UpdateSpriteFlip()
     {
-        if (spriteRenderer == null) return;
+        if (spriteRenderer == null)
+            return;
 
-        Vector2 mousePosition = Mouse.current.position.ReadValue();
-        Camera mainCamera = Camera.main ?? FindAnyObjectByType<Camera>();
-        
-        if (mainCamera == null) return;
+        if (lookAction == null)
+            return;
 
-        Vector3 mouseWorldPosition = mainCamera.ScreenToWorldPoint(new Vector3(mousePosition.x, mousePosition.y, 0f));
-        bool isMouseOnLeft = mouseWorldPosition.x < transform.position.x;
+        Vector2 lookValue = lookAction.ReadValue<Vector2>();
+        if (lookAction.activeControl?.device is Gamepad ||
+            lookAction.activeControl?.device is Joystick)
+        {
+            if (Mathf.Abs(lookValue.x) < 0.01f)
+                return;
+
+            spriteRenderer.flipX = lookValue.x < 0f;
+            return;
+        }
+
+        if (mainCamera == null)
+            return;
+
+        Vector3 mouseWorldPosition =
+            mainCamera.ScreenToWorldPoint(
+                new Vector3(
+                    lookValue.x,
+                    lookValue.y,
+                    0f
+                )
+            );
+
+        bool isMouseOnLeft =
+            mouseWorldPosition.x < transform.position.x;
+
         spriteRenderer.flipX = isMouseOnLeft;
     }
 
-    // ================= INPUT SYSTEM EVENTS =================
+    // =========================================================
+    // INPUT SYSTEM - MOVEMENT
+    // =========================================================
 
     public void OnMove(InputValue value)
     {
         moveInput = value.Get<Vector2>();
     }
 
-    public void OnJump(InputValue value)
-    {
-        // Нажатие - прыгаем только если на земле
-        if (value.isPressed && isGrounded)
-        {
-            float force = stats != null ? stats.JumpForce : 12f;
-            rb.linearVelocity = new Vector2(rb.linearVelocity.x, force);
-        }
-    }
+    // =========================================================
+    // INPUT SYSTEM - ATTACK
+    // =========================================================
 
-    private void UpdateVariableJump()
-    {
-        // Читаем состояние кнопки напрямую через InputAction
-        bool isJumpPressed = jumpAction != null && jumpAction.action.IsPressed();
-
-        // Если кнопка отпущена и мы летим вверх - обнуляем скорость (перестаем подниматься)
-        // Но не ускоряем падение - гравитация работает как обычно
-        if (!isJumpPressed && rb.linearVelocity.y > 0)
-        {
-            rb.linearVelocity = new Vector2(rb.linearVelocity.x, 0f);
-        }
-    }
-
-    public void OnAttack(InputValue value)
-    {
-        // Не используем этот метод, читаем состояние напрямую через InputActionReference
-    }
 
     private void UpdateAttack()
     {
-        // Читаем состояние кнопки напрямую через InputAction
-        bool isAttackButtonPressed = attackAction != null && attackAction.action.IsPressed();
+        bool isAttackHeld = attackAction != null && attackAction.IsPressed();
+        bool isAimingWithStick = lookAction != null &&
+            (lookAction.activeControl?.device is Gamepad ||
+             lookAction.activeControl?.device is Joystick) &&
+            lookAction.ReadValue<Vector2>().sqrMagnitude > 0.01f;
 
-        if (isAttackButtonPressed && currentWeapon != null)
-        {
-            currentWeapon.Attack();
-        }
+        if ((!isAttackHeld && !isAimingWithStick) || currentWeapon == null)
+            return;
+
+        currentWeapon.Attack();
     }
+
+    // =========================================================
+    // INPUT SYSTEM - RELOAD
+    // =========================================================
 
     public void OnReload(InputValue value)
     {
-        if (!value.isPressed) return;
+        if (!value.isPressed)
+            return;
+
+        if (currentWeapon == null)
+            return;
+
+        currentWeapon.Reload();
+    }
+
+    // =========================================================
+    // WEAPON
+    // =========================================================
+
+    private void SpawnStartingWeapon()
+    {
+        if (weaponPrefab == null)
+        {
+            Debug.LogWarning(
+                "CharacterController: weaponPrefab is not assigned.",
+                this
+            );
+
+            return;
+        }
+
+        if (weaponHoldPoint == null)
+        {
+            Debug.LogWarning(
+                "CharacterController: weaponHoldPoint is not assigned.",
+                this
+            );
+
+            return;
+        }
+
+        GameObject weaponObject =
+            Instantiate(
+                weaponPrefab,
+                weaponHoldPoint
+            );
+
+        weaponObject.transform.localPosition =
+            Vector3.zero;
+
+        weaponObject.transform.localRotation =
+            Quaternion.identity;
+
+        currentWeapon =
+            weaponObject.GetComponent<Weapon>();
 
         if (currentWeapon != null)
         {
-            currentWeapon.Reload();
+            currentWeapon.gameObject.SetActive(true);
+        }
+        else
+        {
+            Debug.LogError(
+                "CharacterController: weaponPrefab does not contain a Weapon component!",
+                weaponObject
+            );
         }
     }
 
     public void EquipWeapon(GameObject newWeaponPrefab)
     {
-        if (newWeaponPrefab == null || weaponHoldPoint == null)
-            return;
+        if (newWeaponPrefab == null)
+        {
+            Debug.LogWarning(
+                "CharacterController: newWeaponPrefab is null.",
+                this
+            );
 
-        // Удаляем текущее оружие
+            return;
+        }
+
+        if (weaponHoldPoint == null)
+        {
+            Debug.LogWarning(
+                "CharacterController: weaponHoldPoint is not assigned.",
+                this
+            );
+
+            return;
+        }
+
+        // Удаляем старое оружие.
+
         if (currentWeapon != null)
         {
             Destroy(currentWeapon.gameObject);
+            currentWeapon = null;
         }
 
-        // Спавним новое оружие
-        GameObject weaponObj = Instantiate(newWeaponPrefab, weaponHoldPoint);
-        weaponObj.transform.localPosition = Vector3.zero;
-        weaponObj.transform.localRotation = Quaternion.identity;
+        // Создаём новое.
 
-        currentWeapon = weaponObj.GetComponent<Weapon>();
+        GameObject weaponObject =
+            Instantiate(
+                newWeaponPrefab,
+                weaponHoldPoint
+            );
+
+        weaponObject.transform.localPosition =
+            Vector3.zero;
+
+        weaponObject.transform.localRotation =
+            Quaternion.identity;
+
+        currentWeapon =
+            weaponObject.GetComponent<Weapon>();
+
         if (currentWeapon != null)
         {
             currentWeapon.gameObject.SetActive(true);
         }
+        else
+        {
+            Debug.LogError(
+                "CharacterController: new weapon prefab does not contain a Weapon component!",
+                weaponObject
+            );
+        }
     }
+
+    // =========================================================
+    // DEBUG
+    // =========================================================
 
     private void OnDrawGizmosSelected()
     {
-        if (groundCheck != null)
-        {
-            Gizmos.color = Color.red;
-            Gizmos.DrawWireSphere(groundCheck.position, groundCheckRadius);
-        }
+        if (groundCheck == null)
+            return;
+
+        Gizmos.color = Color.red;
+
+        Gizmos.DrawWireSphere(
+            groundCheck.position,
+            groundCheckRadius
+        );
     }
 }

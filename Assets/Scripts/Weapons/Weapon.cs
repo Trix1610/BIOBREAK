@@ -172,14 +172,6 @@ public class Weapon : MonoBehaviour
 
     private void FireMelee()
     {
-        if (firePoint == null) return;
-
-        Collider2D[] hits = Physics2D.OverlapCircleAll(firePoint.position, shockRadius, shockTargetLayer);
-
-        foreach (var hit in hits)
-        {
-            IDamageable damageable = hit.GetComponentInParent<IDamageable>();
-            DamageSystem.Apply(damageable, (int)damage);
-        }
+        FireShock();
     }
 }
